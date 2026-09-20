@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What does he/she look like?</title>
+<style>
+:root{
+  --bg:#eaf2f9; --panel:#ffffff; --ink:#2f2a28; --muted:#5b6673; --line:#d7e3ee;
+  --accent:#0072B2; --accent-soft:#e9f4fc; --ok:#009E73; --bad:#D55E00; --gold:#E69F00;
+  --radius:18px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;color:var(--ink);
+  font-family:system-ui,"Segoe UI",Roboto,Arial,"Helvetica Neue",sans-serif;
+  background:radial-gradient(1200px 800px at 50% -10%, #ffffff 0%, #eaf2f9 55%, #dce9f4 100%);
+  -webkit-text-size-adjust:100%;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+.hidden{display:none !important}
+.view{max-width:1500px;margin:0 auto;padding:10px clamp(10px,2vw,26px) 16px;min-height:100vh;display:flex;flex-direction:column}
+
+/* ---------- Start screen ---------- */
+.start-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 0}
+.start-card{background:#fff;border:3px solid var(--line);border-radius:26px;padding:26px clamp(16px,3vw,46px);box-shadow:0 18px 50px rgba(31,84,124,.14);max-width:920px;width:100%}
+.start-card h1{margin:0;font-size:clamp(24px,3.4vw,40px);line-height:1.15;text-align:center}
+.start-card .sub{margin:6px 0 18px;text-align:center;color:var(--muted);font-size:clamp(14px,1.5vw,18px)}
+.gender-row{display:grid;grid-template-columns:1fr 1fr;gap:clamp(10px,2vw,20px);margin:8px 0 18px}
+.gender-card{background:#f8fbfe;border:3px solid var(--line);border-radius:20px;padding:10px 10px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:clamp(18px,2vw,24px);font-weight:800;transition:transform .15s,border-color .15s,background .15s}
+.gender-card:hover{border-color:#9ec8e6;transform:translateY(-2px)}
+.gender-card.sel{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 4px rgba(0,114,178,.12)}
+.mini{height:clamp(140px,22vh,210px);display:flex;align-items:flex-end;justify-content:center;pointer-events:none}
+.mini svg{height:100%;width:auto}
+.mode-row{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-top:4px}
+.teacher-row{margin-top:18px;padding-top:14px;border-top:2px dashed var(--line);display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;color:var(--muted);font-size:15px}
+.teacher-row label{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 8px;cursor:pointer;user-select:none}
+.teacher-row input{width:22px;height:22px;accent-color:var(--accent)}
+
+/* ---------- Buttons ---------- */
+.btn{min-height:56px;padding:10px 22px;border-radius:16px;border:3px solid #cfdce8;background:#fff;font-size:clamp(17px,1.6vw,20px);font-weight:700;transition:transform .12s,background .12s,border-color .12s}
+.btn:hover{border-color:#9ec8e6}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#006399;border-color:#006399}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.big{min-height:64px;font-size:clamp(18px,1.9vw,23px)}
+.icon-btn{min-height:48px;padding:8px 16px;border-radius:14px;border:3px solid var(--line);background:#fff;font-weight:700;font-size:16px;color:var(--muted)}
+.icon-btn:hover{border-color:#9ec8e6;color:var(--ink)}
+:focus-visible{outline:4px solid #E69F00;outline-offset:2px}
+
+/* ---------- App layout ---------- */
+.topbar{display:flex;align-items:center;gap:12px;padding:2px 0 10px}
+.topbar .q{flex:1;text-align:center;font-size:clamp(18px,2.4vw,30px);font-weight:800;line-height:1.2}
+.gender-switch{display:flex;border:3px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+.gender-switch button{border:0;background:transparent;min-height:46px;padding:6px 16px;font-weight:800;font-size:16px;color:var(--muted)}
+.gender-switch button.sel{background:var(--accent);color:#fff}
+.score-pill{min-height:48px;display:inline-flex;align-items:center;padding:0 18px;border-radius:999px;background:#fff;border:3px solid var(--line);font-weight:800;font-size:clamp(16px,1.6vw,20px)}
+
+#create main{flex:1;display:grid;grid-template-columns:minmax(340px,55%) 1fr;gap:clamp(10px,2vw,22px);min-height:0}
+#create.result-mode main{grid-template-columns:minmax(280px,36%) 1fr}
+#quiz main{flex:1;display:flex;flex-direction:column;gap:10px;min-height:0}
+#quiz .stage{flex:0 0 auto}
+.stage{display:flex;flex-direction:column;align-items:center;min-height:0;min-width:0}
+.model-box{flex:1;width:100%;min-height:230px;display:flex;align-items:center;justify-content:center}
+.model-box svg{height:min(54vh,600px);max-height:100%;max-width:100%;width:auto;transition:transform .15s}
+#quiz .model-box{flex:0 0 auto;min-height:260px}
+#quiz .model-box svg{height:min(57vh,660px)}
+#create.result-mode .sentence-card{display:none}
+#create.result-mode .model-box svg{height:min(52vh,600px)}
+#quizArea{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:1000px){#quizArea{grid-template-columns:1fr}}
+.qopt{padding:14px 15px;border-radius:16px;border:3px solid var(--line);background:#f8fbfe;font-size:clamp(16px,1.7vw,21px);font-weight:600;line-height:1.35;transition:transform .12s,border-color .12s;height:100%;display:flex;align-items:center;gap:6px}
+.quiz-panel{flex:1;min-height:0;overflow:auto}
+.dchips{display:flex;flex-wrap:wrap;gap:6px}
+.dchip{font-size:13.5px;background:#f6fafd;border:2px dashed var(--line);border-radius:10px;padding:5px 9px;line-height:1.3}
+#fsBtn{position:fixed;right:14px;bottom:14px;z-index:45;min-height:50px;padding:8px 18px;border-radius:999px;border:3px solid var(--line);background:rgba(255,255,255,.94);font-weight:800;font-size:15px;box-shadow:0 8px 22px rgba(31,84,124,.18)}
+#fsBtn:hover{border-color:#9ec8e6}
+.pop{animation:pop .3s ease}
+@keyframes pop{0%{transform:scale(.982)}55%{transform:scale(1.015)}100%{transform:scale(1)}}
+.stage-actions{display:flex;gap:10px;margin:4px 0 8px;flex-wrap:wrap;justify-content:center}
+
+.panel{background:#fff;border:3px solid var(--line);border-radius:22px;padding:clamp(10px,1.6vw,18px);display:flex;flex-direction:column;min-height:0;overflow:auto}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.step{font-size:13px;font-weight:700;padding:5px 11px;border-radius:999px;border:2px solid var(--line);background:#f6fafd;color:var(--muted);cursor:pointer}
+.step.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.step.done{border-color:var(--ok);color:var(--ok)}
+.step.active.done{color:#fff}
+.opt-group{margin-bottom:11px}
+.opt-group h3{margin:0 0 6px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:50px;padding:6px 13px;border-radius:14px;border:3px solid var(--line);background:#f8fbfe;font-size:clamp(15px,1.4vw,18px);font-weight:700;transition:transform .12s,border-color .12s,background .12s}
+.chip:hover{border-color:#9ec8e6;transform:translateY(-1px)}
+.chip.sel{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 4px rgba(0,114,178,.12)}
+.chip .tick{display:none;color:var(--accent);font-weight:900;font-size:20px}
+.chip.sel .tick{display:inline}
+.chip.card{flex-direction:column;align-items:center;justify-content:center;min-width:112px;text-align:center;gap:4px}
+.sw{width:28px;height:28px;border-radius:50%;border:3px solid rgba(47,42,40,.75);flex:0 0 auto}
+.glyph{width:46px;height:34px;flex:0 0 auto}
+.chip .sub{display:block;font-size:12px;font-weight:600;color:#8a6d3b;max-width:180px;line-height:1.25}
+.note{font-size:13.5px;color:#8a6d3b;margin-top:10px;line-height:1.4}
+.nav{display:flex;gap:12px;margin-top:auto;padding-top:12px;flex-wrap:wrap}
+.nav .grow{flex:1}
+
+.style-row{display:flex;flex-wrap:wrap;gap:14px;align-items:center;border-top:2px dashed var(--line);padding-top:10px;margin-top:4px}
+.style-row .lab{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.swatch{width:34px;height:34px;min-height:0;padding:0;border-radius:50%;border:3px solid #cfdce8;background:none}
+.swatch span{display:block;width:100%;height:100%;border-radius:50%}
+.swatch.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,114,178,.18)}
+
+/* ---------- Sentence card ---------- */
+.sentence-card{width:100%;background:#fff;border:3px solid var(--line);border-radius:20px;padding:11px 15px;max-height:33vh;overflow:auto}
+.sc-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+.sline{display:flex;gap:10px;align-items:baseline;padding:3px 0;font-size:clamp(15px,1.5vw,19px);line-height:1.35}
+.stag{flex:0 0 74px;font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+.sline.empty .stext{color:#aeb9c4}
+.sline .hl{font-weight:900}
+.grammar{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;border-top:2px dashed var(--line);padding-top:8px}
+.gchip{font-size:13px;font-weight:700;background:#f1f7fc;border:2px solid #dbe8f2;border-radius:999px;padding:4px 10px;color:#31536b}
+
+/* ---------- Quiz ---------- */
+.qopt{text-align:left}
+.qopt:hover:not(:disabled){border-color:#9ec8e6;transform:translateY(-1px)}
+.qopt:disabled{cursor:default}
+.qopt.correct{border-color:var(--ok);background:#e6f7f1}
+.qopt.wrong{border-color:var(--bad);background:#fdeee5;opacity:.95}
+.qopt .mark{font-weight:900;margin-right:8px}
+.feedback{margin-top:6px;font-size:clamp(15px,1.5vw,19px);line-height:1.4}
+.feedback .good{color:var(--ok);font-weight:800}
+.feedback .bad{color:var(--bad);font-weight:800}
+.qmeta{font-size:14px;color:var(--muted);margin-bottom:8px}
+.quiz-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+
+/* ---------- Summary (result) ---------- */
+.summary-list{list-style:none;margin:0 0 8px;padding:0}
+.summary-list li{padding:8px 0;border-bottom:2px dotted var(--line)}
+.srow-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sfeat{min-width:88px;color:var(--muted);font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.05em}
+.sval{font-weight:800;font-size:clamp(16px,1.5vw,20px)}
+.sex{margin-top:4px;font-size:clamp(15px,1.4vw,18px);color:#26343f;background:#f6fafd;border-left:6px solid var(--accent);border-radius:8px;padding:6px 10px}
+
+/* ---------- Print ---------- */
+#printArea{display:none;color:#111;background:#fff}
+#printArea h1{font-size:22pt;margin:0 0 4pt}
+#printArea .p-sub{font-size:12pt;color:#444;margin-bottom:10pt}
+#printArea .p-row{display:flex;gap:14mm;align-items:flex-start}
+#printArea .p-model{flex:0 0 62mm}
+#printArea .p-model svg{width:62mm;height:auto}
+#printArea ul{list-style:none;margin:0;padding:0;font-size:15pt;line-height:1.75}
+#printArea ul .tag{font-size:9pt;letter-spacing:.08em;text-transform:uppercase;color:#0072B2;font-weight:800;display:inline-block;width:22mm}
+#printArea .p-lines{margin-top:12mm;font-size:13pt;color:#333}
+@media print{
+  @page{size:A4 portrait;margin:10mm}
+  #start,#create,#quiz{display:none !important}
+  #printArea{display:block;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+/* ---------- Small screens ---------- */
+@media (max-width:980px){
+  #create main,#quiz main{grid-template-columns:1fr;grid-template-rows:auto auto}
+  .model-box svg{height:36vh}
+  .panel{max-height:none}
+  .sentence-card{max-height:none}
+}
+@media (max-width:640px){
+  .mode-row{grid-template-columns:1fr}
+  .gender-row{gap:10px}
+  .stag{flex-basis:60px}
+  .model-box svg{height:30vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+}
+
+/* selftest output */
+#selftest{position:fixed;left:8px;bottom:8px;z-index:99;background:#111;color:#9f9;font:12px/1.4 Consolas,monospace;padding:8px;max-height:40vh;overflow:auto;display:none;white-space:pre-wrap}
+</style>
+</head>
+<body>
+
+<!-- ============ START ============ -->
+<section id="start" class="view">
+  <div class="start-wrap">
+    <div class="start-card">
+      <h1>What does he/she look like?</h1>
+      <p class="sub">Appearance &amp; Dress-Up &bull; 7th Grade English &bull; offline</p>
+      <div class="gender-row" id="genderRow">
+        <button class="gender-card" data-gender="girl" aria-pressed="false">
+          <span class="mini" id="miniGirl"></span><span>Girl</span>
+        </button>
+        <button class="gender-card" data-gender="boy" aria-pressed="false">
+          <span class="mini" id="miniBoy"></span><span>Boy</span>
+        </button>
+      </div>
+      <div class="mode-row">
+        <button class="btn primary big" id="startCreate">Create a character</button>
+        <button class="btn big" id="startQuiz">Quiz</button>
+      </div>
+      <div class="teacher-row">
+        <span>Teacher options:</span>
+        <label><input type="checkbox" id="hideSensitive"> hide "fat" and "ugly"</label>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CREATE ============ -->
+<section id="create" class="view hidden">
+  <header class="topbar">
+    <button class="icon-btn" id="createHome">Home</button>
+    <div class="q" id="createQuestion">What does she look like?</div>
+    <div class="gender-switch" id="createGender">
+      <button data-gender="girl">Girl</button>
+      <button data-gender="boy">Boy</button>
+    </div>
+  </header>
+  <main>
+    <section class="stage">
+      <div class="model-box" id="model"></div>
+      <div class="stage-actions">
+        <button class="btn" id="randomBtn">Random</button>
+        <button class="btn" id="resetBtn">Reset</button>
+      </div>
+      <div class="sentence-card">
+        <div class="sc-title">Description</div>
+        <ul id="sentenceList" style="list-style:none;margin:0;padding:0"></ul>
+        <div class="grammar">
+          <span class="gchip">He / She <b>has got</b> + hair / eyes</span>
+          <span class="gchip">He / She <b>is</b> + age / height / weight / look</span>
+        </div>
+        <div class="note hidden" id="kindNote">Note: we can say <b>fat</b> or <b>ugly</b>, but these words can sound unkind when we talk about people.</div>
+      </div>
+    </section>
+    <aside class="panel">
+      <div class="steps" id="stepsBar"></div>
+      <div id="stepArea"></div>
+      <div class="nav" id="navBar">
+        <button class="btn" id="backBtn">Back</button>
+        <button class="btn primary grow" id="nextBtn">Next</button>
+      </div>
+      <div class="style-row" id="styleRow"></div>
+    </aside>
+  </main>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section id="quiz" class="view hidden">
+  <header class="topbar">
+    <button class="icon-btn" id="quizHome">Home</button>
+    <div class="q" id="quizQuestion">Which sentence is true?</div>
+    <div class="score-pill" id="quizScore">0 / 0</div>
+  </header>
+  <main>
+    <section class="stage">
+      <div class="model-box" id="quizModel"></div>
+    </section>
+    <section class="panel quiz-panel">
+      <div class="quiz-panel-head">
+        <div class="qmeta">Look at the picture, then choose one option.</div>
+        <button class="icon-btn" id="quizRestart">Restart score</button>
+      </div>
+      <div id="quizArea"></div>
+      <div id="quizFeedback" class="feedback"></div>
+      <div class="sentence-card hidden" id="quizDescCard" style="max-height:none">
+        <div class="sc-title">Full description</div>
+        <div id="quizDescList" class="dchips"></div>
+      </div>
+      <div class="nav">
+        <button class="btn primary grow" id="quizNext">Next question</button>
+      </div>
+    </section>
+  </main>
+</section>
+
+<!-- ============ PRINT ============ -->
+<div id="printArea">
+  <h1 id="pTitle">What does she look like?</h1>
+  <div class="p-sub">Appearance &amp; Dress-Up &bull; 7th Grade English</div>
+  <div class="p-row">
+    <div class="p-model" id="printModel"></div>
+    <ul id="printSentences"></ul>
+  </div>
+  <div class="p-lines">Name: ______________________________&nbsp;&nbsp;&nbsp;&nbsp;Date: ______________</div>
+</div>
+
+<pre id="selftest"></pre>
+<button id="fsBtn" type="button">Fullscreen</button>
+
+<script>
+'use strict';
+/* ============================================================
+   APPEARANCES - single file offline dress-up
+   Part 1: constants, helpers, rig, sentence engine
+   ============================================================ */
+const CX = 200, GROUND = 606, INK = '#3B2F2A';
+
+const HAIR_ORDER = ['red','ginger','grey','dark','blond','fair','brown'];
+const HAIR_COLORS = {
+  red:    {base:'#C24A3A', dark:'#8C2F23', light:'#E07A62'},
+  ginger: {base:'#E0952F', dark:'#A96C17', light:'#F3B96A'},
+  grey:   {base:'#9AA0A6', dark:'#6E747A', light:'#C6CBD0'},
+  dark:   {base:'#2E2A2B', dark:'#161315', light:'#5A5254'},
+  blond:  {base:'#E3C36B', dark:'#B7953F', light:'#F2DCA0'},
+  fair:   {base:'#C9A063', dark:'#967042', light:'#E2C795'},
+  brown:  {base:'#6B4226', dark:'#452A15', light:'#9C6B40'}
+};
+const EYE_ORDER = ['hazel','brown','blue','green'];
+const EYE_COLORS = {
+  hazel: {base:'#8C6E3F', light:'#D9B36A'},
+  brown: {base:'#5A3A22', light:'#8A6242'},
+  blue:  {base:'#5B9BD5', light:'#A8CFEE'},
+  green: {base:'#3E8E5A', light:'#7FBF95'}
+};
+const SKIN_TONES = [
+  {base:'#F6D7C4', shade:'#E3B79C'},
+  {base:'#EFC3A3', shade:'#D9A17E'},
+  {base:'#D9A176', shade:'#BE8358'},
+  {base:'#B97A4E', shade:'#9A5F37'},
+  {base:'#8C5734', shade:'#6F4225'},
+  {base:'#5C3A28', shade:'#452B1D'}
+];
+const SHIRT_COLORS = ['#2A9D8F','#E76F51','#E9C46A','#4CA6DE','#6A4C93','#F28482','#43AA8B','#264653'];
+const PANTS_COLOR = '#3A506B', SHOE_COLOR = '#2F3E52';
+
+const WEIGHT_ORDER = ['thin','slim','medium','plump','overweight','fat'];
+const WEIGHT_M = {
+  thin:      {sh:0.86, ch:0.82, wa:0.76, hi:0.84, arm:0.78, leg:0.82},
+  slim:      {sh:0.93, ch:0.90, wa:0.87, hi:0.92, arm:0.88, leg:0.90},
+  medium:    {sh:1.00, ch:1.00, wa:1.00, hi:1.00, arm:1.00, leg:1.00},
+  plump:     {sh:1.08, ch:1.12, wa:1.20, hi:1.14, arm:1.14, leg:1.14},
+  overweight:{sh:1.16, ch:1.26, wa:1.38, hi:1.26, arm:1.26, leg:1.24},
+  fat:       {sh:1.22, ch:1.38, wa:1.56, hi:1.36, arm:1.38, leg:1.34}
+};
+const AGE_ORDER = ['young','middle','old'];
+const AGE_M = {
+  young: {head:1.12, leg:0.94, torso:0.94, arm:0.94, neck:1.00},
+  middle:{head:1.00, leg:1.00, torso:1.00, arm:1.00, neck:1.00},
+  old:   {head:0.97, leg:0.98, torso:0.99, arm:0.98, neck:0.55}
+};
+const HEIGHT_ORDER = ['short','medium','tall'];
+const HEIGHT_M = {
+  short: {leg:0.84, torso:0.96, arm:0.90},
+  medium:{leg:1.00, torso:1.00, arm:1.00},
+  tall:  {leg:1.13, torso:1.05, arm:1.06}
+};
+const LOOK_ORDER = ['handsome','beautiful','attractive','well-built','ugly'];
+const LOOK_BY_GENDER = { boy:['handsome','attractive','well-built','ugly'], girl:['beautiful','attractive','ugly'] };
+const HAIR_CLOSE = [['red','ginger'],['blond','fair'],['dark','brown']];
+const EYE_CLOSE = [['hazel','brown']];
+const SHAPES = ['straight','wavy','curly'];
+
+const STEPS = [
+  {id:'hair',  title:'Hair',   q:'What is the hair like?'},
+  {id:'eyes',  title:'Eyes',   q:'What colour are the eyes?'},
+  {id:'age',   title:'Age',    q:'How old is the character?'},
+  {id:'height',title:'Height', q:'How tall is the character?'},
+  {id:'weight',title:'Weight', q:'What is the body like?'},
+  {id:'look',  title:'Look',   q:'What does the character look like?'}
+];
+
+/* ---------- tiny helpers ---------- */
+function r(n){ return Math.round(n*10)/10; }
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function shuffle(a){ const b=a.slice(); for(let i=b.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=b[i]; b[i]=b[j]; b[j]=t; } return b; }
+function hex2rgb(h){ h=h.replace('#',''); if(h.length===3) h=h.split('').map(function(c){return c+c;}).join(''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+function mix(a,b,t){ const A=hex2rgb(a), B=hex2rgb(b); const c=A.map(function(v,i){ return Math.round(v+(B[i]-v)*t); }); return '#'+c.map(function(v){ return v.toString(16).padStart(2,'0'); }).join(''); }
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ---------- rig ---------- */
+function rig(st){
+  const am = AGE_M[st.age], hm = HEIGHT_M[st.height], wm = WEIGHT_M[st.weight];
+  const girl = st.gender==='girl';
+  const headH = 88*am.head;
+  const headW = 76*am.head*(girl?0.98:1);
+  const neckLen = 24*hm.torso*am.neck;
+  const shin  = 138*hm.leg*am.leg;
+  const thigh = 130*hm.leg*am.leg;
+  const torsoLen = 142*hm.torso*am.torso;
+  const ankleY = GROUND-16;
+  const kneeY = ankleY-shin;
+  const hipY = kneeY-thigh;
+  const shoulderY = hipY-torsoLen;
+  const chinY = shoulderY-neckLen;
+  const headCY = chinY-headH/2;
+  const gSh = girl?0.90:1.10, gHi = girl?1.12:0.92;
+  const lookSh = st.look==='well-built'?1.10:1.0;
+  const armLook = st.look==='well-built'?1.06:1.0;
+  const shoulderHW = 50*wm.sh*gSh*lookSh;
+  const chestHW = 46*wm.ch*gSh;
+  const waistHW = 36*wm.wa;
+  const hipHW = 44*wm.hi*gHi;
+  const armW = 20*wm.arm*(girl?0.92:1.08)*am.arm*armLook;
+  const legW = 27*wm.leg*(girl?1.04:0.98)*am.arm;
+  const neckW = 22*am.head*(girl?0.92:1.10);
+  return {am:am, hm:hm, wm:wm, girl:girl, headH:headH, headW:headW, neckLen:neckLen,
+    shin:shin, thigh:thigh, torsoLen:torsoLen, ankleY:ankleY, kneeY:kneeY, hipY:hipY,
+    shoulderY:shoulderY, chinY:chinY, headCY:headCY, shoulderHW:shoulderHW, chestHW:chestHW,
+    waistHW:waistHW, hipHW:hipHW, armW:armW, legW:legW, neckW:neckW};
+}
+
+/* ---------- colours resolved for the current state ---------- */
+function hairPalette(st){
+  const c = HAIR_COLORS[st.hairColor];
+  if(st.age!=='old') return c;
+  const G = '#AEB4BA';
+  return {base:mix(c.base,G,0.45), dark:mix(c.dark,G,0.40), light:mix(c.light,'#E9ECEF',0.55)};
+}
+function skinPalette(st){ return SKIN_TONES[st.skin] || SKIN_TONES[1]; }
+function shirtColor(st){ return SHIRT_COLORS[st.shirt] || SHIRT_COLORS[0]; }
+
+/* ---------- sentence engine ---------- */
+function pronoun(st){ return st.gender==='boy'?'He':'She'; }
+function hairColorWord(st){ return st.hairColor==='blond' ? (st.gender==='girl'?'blonde':'blond') : st.hairColor; }
+function ageWord(st){ return st.age==='middle'?'middle-aged':st.age; }
+function sentenceFor(cat, st){
+  const S = pronoun(st);
+  if(cat==='hair')   return S+' has got '+st.hairLength+' '+st.hairShape+' '+hairColorWord(st)+' hair.';
+  if(cat==='eyes')   return S+' has got '+st.eyeColor+' eyes.';
+  if(cat==='age')    return S+' is '+ageWord(st)+'.';
+  if(cat==='height') return st.height==='medium' ? S+' is of medium height.' : S+' is '+st.height+'.';
+  if(cat==='weight') return st.weight==='medium' ? S+' is of medium weight.' : S+' is '+st.weight+'.';
+  if(cat==='look')   return S+' is '+st.look+'.';
+  return '';
+}
+function allSentences(st){
+  const cats = ['hair','eyes','age','height','weight','look'];
+  return cats.filter(function(c){ return c!=='look' || !!st.look; }).map(function(c){ return [c, sentenceFor(c,st)]; });
+}
+function questionText(st){ return 'What does '+(st.gender==='boy'?'he':'she')+' look like?'; }
+
+/* ---------- random / defaults ---------- */
+function defaultFeatures(g){
+  if(g==='girl') return {hairLength:'long', hairColor:'brown', hairShape:'wavy', eyeColor:'brown', age:'young', height:'medium', weight:'medium', look:null};
+  return {hairLength:'short', hairColor:'dark', hairShape:'straight', eyeColor:'brown', age:'young', height:'medium', weight:'medium', look:null};
+}
+function randomState(gender, hide){
+  const g = gender || (Math.random()<0.5?'girl':'boy');
+  const weights = WEIGHT_ORDER.filter(function(w){ return !(hide && w==='fat'); });
+  const looks = LOOK_BY_GENDER[g].filter(function(l){ return !(hide && l==='ugly'); });
+  return {
+    gender:g,
+    hairLength: pick(['short','long']),
+    hairColor: pick(HAIR_ORDER),
+    hairShape: pick(['straight','wavy','curly']),
+    eyeColor: pick(EYE_ORDER),
+    age: pick(AGE_ORDER),
+    height: pick(HEIGHT_ORDER),
+    weight: pick(weights),
+    look: pick(looks),
+    skin: Math.floor(Math.random()*SKIN_TONES.length),
+    shirt: Math.floor(Math.random()*SHIRT_COLORS.length),
+    hide: !!hide
+  };
+}
+/* ============================================================
+   Part 2: SVG character builder
+   ============================================================ */
+
+/* ---------- small geometry helpers ---------- */
+function lerp2(a,b,t){ return {x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t}; }
+function bezPt(p0,c1,c2,p1,t){
+  const mt=1-t;
+  return {
+    x: mt*mt*mt*p0.x + 3*mt*mt*t*c1.x + 3*mt*t*t*c2.x + t*t*t*p1.x,
+    y: mt*mt*mt*p0.y + 3*mt*mt*t*c1.y + 3*mt*t*t*c2.y + t*t*t*p1.y
+  };
+}
+function subCubic(p0,c1,c2,p1,t){
+  const q1 = lerp2(p0,c1,t);
+  const q2 = lerp2(lerp2(p0,c1,t), lerp2(c1,c2,t), t);
+  return {p0:p0, c1:q1, c2:q2, p1:bezPt(p0,c1,c2,p1,t)};
+}
+function segPath(S){ return 'M '+r(S.p0.x)+' '+r(S.p0.y)+' C '+r(S.c1.x)+' '+r(S.c1.y)+' '+r(S.c2.x)+' '+r(S.c2.y)+' '+r(S.p1.x)+' '+r(S.p1.y); }
+function smoothSide(pts){
+  let d='';
+  for(let i=0;i<pts.length-1;i++){
+    const a=pts[i], b=pts[i+1], dy=b.y-a.y;
+    d += 'C '+r(a.x)+' '+r(a.y+dy*0.45)+' '+r(b.x)+' '+r(b.y-dy*0.45)+' '+r(b.x)+' '+r(b.y)+' ';
+  }
+  return d;
+}
+function outlineD(pts,opt){
+  opt=opt||{};
+  let d='M '+r(pts[0].x)+' '+r(pts[0].y)+' ';
+  d+=smoothSide(pts);
+  const last=pts[pts.length-1];
+  if(opt.flatBottom){ d+='L '+r(2*CX-last.x)+' '+r(last.y)+' '; }
+  else { d+='Q '+r(CX)+' '+r(last.y+8)+' '+r(2*CX-last.x)+' '+r(last.y)+' '; }
+  const right=[{x:2*CX-last.x, y:last.y}];
+  for(let i=pts.length-1;i>=1;i--){ right.push({x:2*CX-pts[i].x, y:pts[i].y}); }
+  right.push({x:2*CX-pts[0].x, y:pts[0].y});
+  d+=smoothSide(right);
+  if(opt.neckline){
+    const top=right[right.length-1];
+    d+='Q '+r(CX)+' '+r(top.y+7)+' '+r(pts[0].x)+' '+r(pts[0].y)+' ';
+  }
+  d+='Z';
+  return d;
+}
+function torsoPts(R, expand, topY, botY){
+  const e=expand||0;
+  const y0 = (topY!==undefined)? topY : R.shoulderY;
+  const y3 = (botY!==undefined)? botY : R.hipY+6;
+  const span = R.hipY-y0;
+  return [
+    {x:CX-(R.shoulderHW+e),   y:y0},
+    {x:CX-(R.chestHW+e+1),    y:y0+span*0.32},
+    {x:CX-(R.waistHW+e+1),    y:y0+span*0.60},
+    {x:CX-(R.hipHW+e),        y:y0+span*0.92},
+    {x:CX-(R.hipHW*0.62+e),   y:y3}
+  ];
+}
+function armGeom(st,R,side){
+  const p0={x:CX+side*(R.shoulderHW-R.armW*0.30), y:R.shoulderY+8};
+  const wrX=CX+side*(R.shoulderHW+3);
+  const p1={x:wrX, y:R.hipY+14};
+  return {
+    p0:p0,
+    c1:{x:p0.x+side*4, y:p0.y+(p1.y-p0.y)*0.40},
+    c2:{x:wrX+side*3,  y:p1.y-(p1.y-p0.y)*0.28},
+    p1:p1
+  };
+}
+function legGeom(st,R,side){
+  const legX=Math.max(R.legW*0.5, R.hipHW*0.38);
+  const p0={x:CX+side*legX, y:R.hipY+8};
+  const p1={x:CX+side*legX*0.90, y:R.ankleY};
+  return {
+    p0:p0,
+    c1:{x:CX+side*legX*1.04, y:R.kneeY-(R.kneeY-p0.y)*0.10},
+    c2:{x:CX+side*legX*0.86, y:R.ankleY-(R.ankleY-R.kneeY)*0.35},
+    p1:p1
+  };
+}
+
+/* ---------- body ---------- */
+function bodySVG(st,R){
+  const skin=skinPalette(st);
+  const g=[];
+  [-1,1].forEach(function(side){
+    const L=legGeom(st,R,side), d=segPath(L);
+    g.push('<path d="'+d+'" fill="none" stroke="'+INK+'" stroke-width="'+r(R.legW+5)+'" stroke-linecap="round"/>');
+    g.push('<path d="'+d+'" fill="none" stroke="'+skin.base+'" stroke-width="'+r(R.legW)+'" stroke-linecap="round"/>');
+  });
+  g.push('<path d="'+outlineD(torsoPts(R,0),{}) +'" fill="'+skin.base+'" stroke="'+INK+'" stroke-width="3"/>');
+  g.push('<path d="M '+r(CX-R.neckW/2)+' '+r(R.chinY-2)+' L '+r(CX-R.neckW/2)+' '+r(R.shoulderY+10)+' L '+r(CX+R.neckW/2)+' '+r(R.shoulderY+10)+' L '+r(CX+R.neckW/2)+' '+r(R.chinY-2)+' Z" fill="'+skin.base+'" stroke="'+INK+'" stroke-width="3"/>');
+  [-1,1].forEach(function(side){
+    const A=armGeom(st,R,side), d=segPath(A);
+    g.push('<path d="'+d+'" fill="none" stroke="'+INK+'" stroke-width="'+r(R.armW+5)+'" stroke-linecap="round"/>');
+    g.push('<path d="'+d+'" fill="none" stroke="'+skin.base+'" stroke-width="'+r(R.armW)+'" stroke-linecap="round"/>');
+  });
+  [-1,1].forEach(function(side){
+    const A=armGeom(st,R,side);
+    g.push('<circle cx="'+r(A.p1.x)+'" cy="'+r(A.p1.y+R.armW*0.25)+'" r="'+r(R.armW*0.62)+'" fill="'+skin.base+'" stroke="'+INK+'" stroke-width="3"/>');
+  });
+  return g.join('');
+}
+
+/* ---------- clothes ---------- */
+function skirtD(R){
+  const topY=R.hipY-24, hemY=R.kneeY-6, wTop=R.waistHW+6, wHem=R.hipHW+30;
+  return 'M '+r(CX-wTop)+' '+r(topY)+
+    ' C '+r(CX-wTop-6)+' '+r(topY+30)+' '+r(CX-wHem+10)+' '+r(hemY-45)+' '+r(CX-wHem)+' '+r(hemY)+
+    ' Q '+r(CX)+' '+r(hemY+14)+' '+r(CX+wHem)+' '+r(hemY)+
+    ' C '+r(CX+wHem-10)+' '+r(hemY-45)+' '+r(CX+wTop+6)+' '+r(topY+30)+' '+r(CX+wTop)+' '+r(topY)+' Z';
+}
+function pantLegD(st,R,side){
+  const L=legGeom(st,R,side);
+  const s=side;
+  const topY=R.hipY-24, hemY=R.ankleY-4;
+  const halfTop=R.legW*0.64+2, halfBot=R.legW*0.56+2;
+  const x0=L.p0.x, x1=L.p1.x, kneeY=R.kneeY;
+  let d='M '+r(x0-s*halfTop)+' '+r(topY);
+  d+=' L '+r(x0-s*halfTop)+' '+r(L.p0.y);
+  d+=' C '+r(x0-s*halfTop)+' '+r(kneeY)+' '+r(x1-s*halfBot)+' '+r(kneeY)+' '+r(x1-s*halfBot)+' '+r(hemY);
+  d+=' L '+r(x1+s*halfBot)+' '+r(hemY);
+  d+=' C '+r(x1+s*halfBot)+' '+r(kneeY)+' '+r(x0+s*halfTop)+' '+r(kneeY)+' '+r(x0+s*halfTop)+' '+r(L.p0.y);
+  d+=' L '+r(x0+s*halfTop)+' '+r(topY)+' Z';
+  return d;
+}
+function hipsD(R){
+  const wTop=R.hipHW+5, topY=R.hipY-24, yb=R.hipY+22;
+  return 'M '+r(CX-wTop)+' '+r(topY)+
+    ' L '+r(CX-wTop)+' '+r(R.hipY)+
+    ' Q '+r(CX-wTop)+' '+r(yb)+' '+r(CX-wTop+8)+' '+r(yb)+
+    ' L '+r(CX+wTop-8)+' '+r(yb)+
+    ' Q '+r(CX+wTop)+' '+r(yb)+' '+r(CX+wTop)+' '+r(R.hipY)+
+    ' L '+r(CX+wTop)+' '+r(topY)+' Z';
+}
+function pantsSVG(st,R){
+  const parts=[hipsD(R), pantLegD(st,R,-1), pantLegD(st,R,1)];
+  let s='';
+  parts.forEach(function(d){ s+='<path d="'+d+'" fill="'+PANTS_COLOR+'" stroke="'+INK+'" stroke-width="4"/>'; });
+  parts.forEach(function(d){ s+='<path d="'+d+'" fill="'+PANTS_COLOR+'"/>'; });
+  s+='<path d="M '+r(CX-7)+' '+r(R.hipY+24)+' Q '+r(CX-3)+' '+r(R.hipY+36)+' '+CX+' '+r(R.hipY+44)+'" fill="none" stroke="'+INK+'" stroke-width="2" opacity="0.4"/>';
+  s+='<path d="M '+r(CX+7)+' '+r(R.hipY+24)+' Q '+r(CX+3)+' '+r(R.hipY+36)+' '+CX+' '+r(R.hipY+44)+'" fill="none" stroke="'+INK+'" stroke-width="2" opacity="0.4"/>';
+  s+='<path d="M '+CX+' '+r(R.hipY+48)+' L '+CX+' '+r(R.ankleY-14)+'" stroke="'+INK+'" stroke-width="2" opacity="0.35"/>';
+  return s;
+}
+function clothesSVG(st,R){
+  const shirt=shirtColor(st);
+  const g=[];
+  g.push('<path d="'+outlineD(torsoPts(R,4,R.shoulderY-4,R.hipY+4),{flatBottom:true,neckline:true})+'" fill="'+shirt+'" stroke="'+INK+'" stroke-width="3"/>');
+  [-1,1].forEach(function(side){
+    const A=armGeom(st,R,side);
+    const S=subCubic(A.p0,A.c1,A.c2,A.p1,0.46);
+    const d=segPath(S);
+    g.push('<path d="'+d+'" fill="none" stroke="'+INK+'" stroke-width="'+r(R.armW+12)+'" stroke-linecap="round"/>');
+    g.push('<path d="'+d+'" fill="none" stroke="'+shirt+'" stroke-width="'+r(R.armW+8)+'" stroke-linecap="round"/>');
+  });
+  if(st.gender==='girl'){
+    g.push('<path d="'+skirtD(R)+'" fill="'+PANTS_COLOR+'" stroke="'+INK+'" stroke-width="3"/>');
+  } else {
+    g.push(pantsSVG(st,R));
+  }
+  [-1,1].forEach(function(side){
+    const L=legGeom(st,R,side);
+    const x=L.p1.x, y=R.ankleY;
+    g.push('<rect x="'+r(x-R.legW*0.78)+'" y="'+r(y-6)+'" width="'+r(R.legW*1.56)+'" height="24" rx="10" fill="'+SHOE_COLOR+'" stroke="'+INK+'" stroke-width="3"/>');
+    g.push('<path d="M '+r(x-R.legW*0.58)+' '+r(y+12)+' L '+r(x+R.legW*0.58)+' '+r(y+12)+'" stroke="#F4F6F8" stroke-width="5" stroke-linecap="round"/>');
+  });
+  return g.join('');
+}
+
+/* ---------- head + face ---------- */
+function mouthFor(look){
+  if(look==='handsome'||look==='beautiful') return 'M -13 26 Q 0 39 13 26';
+  if(look==='attractive'||look==='well-built') return 'M -9 27 Q 0 34 9 27';
+  return 'M -7 29 Q 0 32 7 29';
+}
+function eyeIris(st, eye, x, y){
+  const g=[], R1=6.2;
+  g.push('<circle cx="'+r(x)+'" cy="'+r(y)+'" r="'+R1+'" fill="'+eye.base+'"/>');
+  if(st.eyeColor==='brown'){
+    g.push('<circle cx="'+r(x)+'" cy="'+r(y)+'" r="'+R1+'" fill="none" stroke="#2E1B10" stroke-width="1.8" opacity="0.7"/>');
+  } else if(st.eyeColor==='hazel'){
+    g.push('<circle cx="'+r(x)+'" cy="'+r(y)+'" r="3.4" fill="'+eye.light+'" opacity="0.92"/>');
+  } else if(st.eyeColor==='blue'){
+    g.push('<circle cx="'+r(x)+'" cy="'+r(y)+'" r="'+R1+'" fill="none" stroke="'+eye.light+'" stroke-width="1.5"/>');
+  } else {
+    g.push('<path d="M '+r(x+3.6)+' '+r(y)+' L '+r(x-3.6)+' '+r(y)+' M '+r(x)+' '+r(y+3.6)+' L '+r(x)+' '+r(y-3.6)+'" stroke="'+eye.light+'" stroke-width="1.5" opacity="0.9"/>');
+  }
+  g.push('<circle cx="'+r(x)+'" cy="'+r(y)+'" r="3.1" fill="#241D19"/>');
+  g.push('<circle cx="'+r(x-1.2)+'" cy="'+r(y-1.2)+'" r="'+((st.eyeColor==='blue')?2.3:1.2)+'" fill="#fff" opacity="0.95"/>');
+  return g.join('');
+}
+function faceSVG(st,skin,hair){
+  const g=[], eyeY=8, eyeDX=16.5, eyeRX=10.5, eyeRY=9.5;
+  [-1,1].forEach(function(side){
+    const ex=side*eyeDX;
+    g.push('<ellipse cx="'+ex+'" cy="'+eyeY+'" rx="'+eyeRX+'" ry="'+eyeRY+'" fill="#FFFFFF" stroke="'+INK+'" stroke-width="2.4"/>');
+    g.push(eyeIris(st, EYE_COLORS[st.eyeColor], ex, eyeY));
+  });
+  const bw = st.gender==='boy'?4:3.4;
+  g.push('<path d="M -24 -6 Q -17 -12 -10 -6" fill="none" stroke="'+hair.dark+'" stroke-width="'+bw+'" stroke-linecap="round"/>');
+  g.push('<path d="M 10 -6 Q 17 -12 24 -6" fill="none" stroke="'+hair.dark+'" stroke-width="'+bw+'" stroke-linecap="round"/>');
+  g.push('<path d="M 1 13 Q 4 18 -1 20" fill="none" stroke="'+skin.shade+'" stroke-width="2.4" stroke-linecap="round"/>');
+  g.push('<path d="'+mouthFor(st.look)+'" fill="none" stroke="'+INK+'" stroke-width="2.6" stroke-linecap="round"/>');
+  const cheekOp = st.age==='young'?0.5:(st.age==='middle'?0.35:0.22);
+  g.push('<ellipse cx="-23" cy="21" rx="6.5" ry="4.2" fill="#F29B9B" opacity="'+cheekOp+'"/>');
+  g.push('<ellipse cx="23" cy="21" rx="6.5" ry="4.2" fill="#F29B9B" opacity="'+cheekOp+'"/>');
+  if(st.gender==='girl'){
+    g.push('<path d="M -27 2 L -31 -1 M -26 5 L -30 5" stroke="'+INK+'" stroke-width="2.4" fill="none" stroke-linecap="round"/>');
+    g.push('<path d="M 27 2 L 31 -1 M 26 5 L 30 5" stroke="'+INK+'" stroke-width="2.4" fill="none" stroke-linecap="round"/>');
+  }
+  if(st.age==='middle'){
+    g.push('<path d="M -12 -18 Q 0 -15 12 -18" fill="none" stroke="'+skin.shade+'" stroke-width="1.8" opacity="0.7"/>');
+  }
+  if(st.age==='old'){
+    g.push('<path d="M -12 -18 Q 0 -15 12 -18" fill="none" stroke="'+skin.shade+'" stroke-width="1.8" opacity="0.85"/>');
+    g.push('<path d="M -26 4 l -5 -2 M -26 7 l -6 0 M -26 10 l -5 2" stroke="'+skin.shade+'" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.8"/>');
+    g.push('<path d="M 26 4 l 5 -2 M 26 7 l 6 0 M 26 10 l 5 2" stroke="'+skin.shade+'" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.8"/>');
+    g.push('<path d="M -7 21 Q -10 26 -6 30 M 7 21 Q 10 26 6 30" fill="none" stroke="'+skin.shade+'" stroke-width="1.6" opacity="0.75"/>');
+    if(st.gender==='boy'){
+      g.push('<path d="M -11 22 Q 0 28 11 22" fill="none" stroke="'+mix(hair.dark,hair.base,0.45)+'" stroke-width="4.4" stroke-linecap="round"/>');
+    }
+  }
+  return g.join('');
+}
+function headD(gender){
+  if(gender!=='boy') return null;
+  return 'M -38 0 A 38 44 0 1 1 38 0 C 37 16 33 27 27 33 C 21 41 11 44 0 44 C -11 44 -21 41 -27 33 C -33 27 -37 16 -38 0 Z';
+}
+function headGroup(st,R){
+  const sx=R.headW/76, sy=R.headH/88;
+  const skin=skinPalette(st), hair=hairPalette(st);
+  let s='';
+  s+='<circle cx="-37" cy="6" r="7.5" fill="'+skin.base+'" stroke="'+INK+'" stroke-width="3"/>';
+  s+='<circle cx="37" cy="6" r="7.5" fill="'+skin.base+'" stroke="'+INK+'" stroke-width="3"/>';
+  const hd=headD(st.gender);
+  s+= hd ? '<path d="'+hd+'" fill="'+skin.base+'" stroke="'+INK+'" stroke-width="3"/>'
+         : '<ellipse cx="0" cy="0" rx="38" ry="44" fill="'+skin.base+'" stroke="'+INK+'" stroke-width="3"/>';
+  s+=faceSVG(st,skin,hair);
+  return '<g transform="translate('+CX+' '+r(R.headCY)+') scale('+r(sx)+' '+r(sy)+')">'+s+'</g>';
+}
+
+/* ---------- hair ---------- */
+function capPath(shape, age, gender, length){
+  const y0 = (age==='old')? -2 : 2;
+  if(gender==='boy'){
+    if(length==='long'){
+      if(shape==='straight') return 'M -38 '+y0+' A 38 44 0 1 1 38 '+y0+' L 36 -12 Q 24 -6 12 -11 Q 0 -16 -12 -11 Q -24 -6 -36 -12 Z';
+      if(shape==='wavy') return 'M -38 '+y0+' A 38 44 0 1 1 38 '+y0+' L 36 -10 Q 30 -4 24 -11 Q 18 -18 12 -11 Q 6 -4 0 -11 Q -6 -18 -12 -11 Q -18 -4 -24 -11 Q -30 -17 -36 -11 Z';
+      return 'M -38 '+y0+' A 38 44 0 1 1 38 '+y0+' L 35 -8 A 7 7 0 0 1 21 -11 A 7 7 0 0 1 7 -11 A 7 7 0 0 1 -7 -11 A 7 7 0 0 1 -21 -11 A 7 7 0 0 1 -35 -10 Z';
+    }
+    if(shape==='straight') return 'M -38 '+y0+' A 38 44 0 1 1 38 '+y0+' L 35 -15 Q 0 -12 -35 -15 Z';
+    if(shape==='wavy') return 'M -38 '+y0+' C -37 -22 -35 -34 -32 -46 L -28 -54 L -23 -48 L -18 -56 L -12 -49 L -6 -57 L 0 -49 L 6 -56 L 12 -48 L 18 -55 L 24 -47 L 29 -52 L 34 -45 C 37 -32 38 -16 38 '+y0+' L 35 -15 Q 0 -12 -35 -15 Z';
+    return 'M -38 '+y0+' A 38 44 0 1 1 38 '+y0+' L 34 -12 A 7 7 0 0 1 20 -14 A 7 7 0 0 1 6 -14 A 7 7 0 0 1 -8 -14 A 7 7 0 0 1 -22 -14 A 7 7 0 0 1 -36 -13 Z';
+  }
+  const top='M -38 '+y0+' A 38 44 0 1 1 38 '+y0+' ';
+  if(shape==='straight') return top+'L 34 -14 Q 0 -9 -34 -14 Z';
+  if(shape==='wavy') return top+'L 34 -12 Q 28 -18 22 -12 Q 16 -6 10 -12 Q 4 -18 -2 -12 Q -8 -6 -14 -12 Q -20 -18 -26 -12 Q -31 -7 -36 -13 Z';
+  return top+'L 34 -8 A 8 8 0 0 1 18 -10 A 8 8 0 0 1 2 -10 A 8 8 0 0 1 -14 -10 A 8 8 0 0 1 -30 -10 A 8 8 0 0 1 -37 -12 Z';
+}
+function clusterSVG(pts,color){
+  let a='', b='';
+  pts.forEach(function(p){ a+='<circle cx="'+r(p.x)+'" cy="'+r(p.y)+'" r="'+r(p.rad)+'" fill="'+INK+'"/>'; });
+  pts.forEach(function(p){ b+='<circle cx="'+r(p.x)+'" cy="'+r(p.y)+'" r="'+r(p.rad-1.6)+'" fill="'+color+'"/>'; });
+  return a+b;
+}
+function curlyCrown(rad, rx, ry){
+  const pts=[], angles=[15,45,75,105,135,165];
+  angles.forEach(function(a){
+    const t=a*Math.PI/180;
+    pts.push({x:rx*Math.cos(t), y:-ry*Math.sin(t), rad:rad});
+  });
+  return pts;
+}
+function strandSVG(side, shape, c){
+  const s=side;
+  let d;
+  if(shape==='wavy'){
+    d='M '+r(s*33)+' -14 C '+r(s*44)+' 10 '+r(s*44)+' 36 '+r(s*39)+' 56 '+
+      'Q '+r(s*46)+' 66 '+r(s*38)+' 74 Q '+r(s*31)+' 90 '+r(s*28)+' 96 '+
+      'C '+r(s*26)+' 60 '+r(s*25)+' 20 '+r(s*25)+' -8 Z';
+  } else {
+    d='M '+r(s*33)+' -14 C '+r(s*44)+' 10 '+r(s*45)+' 50 '+r(s*36)+' 94 '+
+      'C '+r(s*32)+' 102 '+r(s*28)+' 100 '+r(s*27)+' 92 '+
+      'C '+r(s*25)+' 55 '+r(s*25)+' 18 '+r(s*25)+' -8 Z';
+  }
+  let out='<path d="'+d+'" fill="'+c.base+'" stroke="'+INK+'" stroke-width="2.4"/>';
+  if(shape==='curly'){
+    const pts=[];
+    for(let i=0;i<5;i++){ pts.push({x:s*40, y:2+i*22, rad:9}); }
+    out+=clusterSVG(pts, c.base);
+  }
+  return out;
+}
+function fadeSVG(c, skin){
+  const col=mix(c.dark, skin.base, 0.45);
+  return '<path d="M -35 -12 Q -32 -2 -30 6" stroke="'+col+'" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.55"/>'+
+         '<path d="M 35 -12 Q 32 -2 30 6" stroke="'+col+'" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.55"/>';
+}
+function textureSVG(c){
+  return '<path d="M -18 -38 Q -10 -42 -2 -38 M 4 -40 Q 12 -44 20 -39 M -28 -30 Q -22 -34 -16 -30" fill="none" stroke="'+c.light+'" stroke-width="2.4" stroke-linecap="round" opacity="0.75"/>';
+}
+function tuftSVG(pts, color){
+  let a='', b='';
+  pts.forEach(function(p){
+    a+='<path d="M '+r(p.x-7)+' '+r(p.y+3)+' L '+r(p.x)+' '+r(p.y-p.h)+' L '+r(p.x+7)+' '+r(p.y+3)+' Z" fill="'+INK+'"/>';
+    b+='<path d="M '+r(p.x-4.6)+' '+r(p.y+2)+' L '+r(p.x)+' '+r(p.y-p.h+2.4)+' L '+r(p.x+4.6)+' '+r(p.y+2)+' Z" fill="'+color+'"/>';
+  });
+  return a+b;
+}
+function afroCrown(){
+  const rows=[[25,42,47,9],[60,42,47,9.5],[90,42,47,10],[120,42,47,9.5],[155,42,47,9],
+              [45,28,51,8],[90,28,51,8.5],[135,28,51,8]];
+  return rows.map(function(a){
+    const t=a[0]*Math.PI/180;
+    return {x:a[1]*Math.cos(t), y:-a[2]*Math.sin(t), rad:a[3]};
+  });
+}
+function layeredSVG(paths, color){
+  let s='';
+  paths.forEach(function(d){ s+='<path d="'+d+'" fill="'+INK+'" stroke="'+INK+'" stroke-width="5"/>'; });
+  paths.forEach(function(d){ s+='<path d="'+d+'" fill="'+color+'" stroke="'+color+'" stroke-width="2.6"/>'; });
+  return s;
+}
+function shagStrand(side, shape, c){
+  const s=side;
+  const main='M '+r(s*33)+' -12 C '+r(s*41)+' -2 '+r(s*42)+' 10 '+r(s*37)+' 20 C '+r(s*34)+' 27 '+r(s*30)+' 29 '+r(s*29)+' 24 C '+r(s*27)+' 12 '+r(s*27)+' 2 '+r(s*27)+' -6 Z';
+  const wisp='M '+r(s*31)+' 22 C '+r(s*33)+' 28 '+r(s*32)+' 33 '+r(s*30)+' 36 C '+r(s*29)+' 32 '+r(s*29)+' 27 '+r(s*29)+' 24 Z';
+  const tuft='M '+r(s*29)+' -8 C '+r(s*43)+' -2 '+r(s*44)+' 10 '+r(s*39)+' 18 C '+r(s*37)+' 23 '+r(s*33)+' 21 '+r(s*32)+' 15 C '+r(s*31)+' 6 '+r(s*28)+' -1 '+r(s*28)+' -4 Z';
+  let out=layeredSVG([main, wisp, tuft], c.base);
+  if(shape==='curly'){
+    out+=clusterSVG([{x:s*40,y:0,rad:7},{x:s*40,y:14,rad:7},{x:s*36,y:27,rad:7}], c.base);
+  }
+  return out;
+}
+function hairFrontGroup(st,R){
+  const sx=R.headW/76, sy=R.headH/88;
+  const c=hairPalette(st), skin=skinPalette(st);
+  const boy=st.gender==='boy';
+  let s='';
+  if(boy && st.hairLength==='short') s+=fadeSVG(c,skin);
+  s+='<path d="'+capPath(st.hairShape, st.age, st.gender, st.hairLength)+'" fill="'+c.base+'" stroke="'+INK+'" stroke-width="2.6"/>';
+  if(boy){
+    if(st.hairLength==='short'){
+      if(st.hairShape==='straight') s+=textureSVG(c);
+      else if(st.hairShape==='curly') s+=clusterSVG(afroCrown(), c.base);
+    } else {
+      if(st.hairShape==='wavy') s+=tuftSVG([{x:-18,y:-40,h:8},{x:0,y:-44,h:10},{x:18,y:-41,h:8}], c.base);
+      if(st.hairShape==='straight') s+=textureSVG(c);
+      s+=shagStrand(-1, st.hairShape, c);
+      s+=shagStrand(1, st.hairShape, c);
+      if(st.hairShape==='curly') s+=clusterSVG(afroCrown(), c.base);
+    }
+  } else if(st.hairShape==='curly'){
+    s+=clusterSVG(curlyCrown(8.5,39,45), c.base);
+  }
+  if(!(boy && (st.hairShape==='wavy' || st.hairShape==='curly'))){
+    s+='<path d="M -24 -32 Q -4 -42 18 -32" fill="none" stroke="'+c.light+'" stroke-width="3" stroke-linecap="round" opacity="0.85"/>';
+  }
+  if(!boy && st.hairLength==='long'){
+    s+=strandSVG(-1, st.hairShape, c);
+    s+=strandSVG(1, st.hairShape, c);
+  }
+  return '<g transform="translate('+CX+' '+r(R.headCY)+') scale('+r(sx)+' '+r(sy)+')">'+s+'</g>';
+}
+function hairBackGroup(st,R){
+  const sx=R.headW/76, sy=R.headH/88;
+  const c=hairPalette(st);
+  let s='';
+  if(st.gender==='boy'){
+    if(st.hairLength==='short'){
+      s+='<path d="M -38 -8 L -39 2 Q 0 -6 39 2 L 38 -8 A 38 44 0 1 0 -38 -8 Z" fill="'+c.base+'" stroke="'+INK+'" stroke-width="2.6"/>';
+    } else {
+      let d;
+      if(st.hairShape==='straight'){
+        d='M -36 -6 C -38 12 -38 34 -35 54 Q -28 64 -18 57 Q -8 66 2 58 Q 12 66 22 56 Q 30 62 36 52 C 38 32 38 12 36 -6 A 36 42 0 1 0 -36 -6 Z';
+      } else if(st.hairShape==='wavy'){
+        d='M -36 -6 C -38 12 -38 32 -35 52 Q -29 62 -23 54 Q -17 64 -10 55 Q -3 64 4 55 Q 11 64 18 54 Q 26 62 32 51 Q 36 58 36 50 C 38 30 38 12 36 -6 A 36 42 0 1 0 -36 -6 Z';
+      } else {
+        d='M -36 -6 C -37 10 -37 30 -35 48 Q -30 58 -24 51 Q -19 60 -13 51 Q -7 61 -1 51 Q 5 61 11 51 Q 17 60 22 51 Q 29 58 32 48 C 36 30 36 10 36 -6 A 36 42 0 1 0 -36 -6 Z';
+      }
+      s+='<path d="'+d+'" fill="'+c.base+'" stroke="'+INK+'" stroke-width="2.6"/>';
+      if(st.hairShape==='curly'){
+        const pts=[{x:0,y:58,rad:9}];
+        [-1,1].forEach(function(side){
+          for(let i=0;i<3;i++){ pts.push({x:side*(30-i*2), y:20+i*16, rad:9}); }
+          pts.push({x:side*13, y:56, rad:9});
+        });
+        s+=clusterSVG(pts, c.base);
+      }
+    }
+    return '<g transform="translate('+CX+' '+r(R.headCY)+') scale('+r(sx)+' '+r(sy)+')">'+s+'</g>';
+  }
+  if(st.hairLength==='short'){
+    s+='<path d="M -38 -8 L -41 6 Q 0 -2 41 6 L 38 -8 A 38 44 0 1 0 -38 -8 Z" fill="'+c.base+'" stroke="'+INK+'" stroke-width="2.6"/>';
+  } else {
+    let d;
+    if(st.hairShape==='straight'){
+      d='M -42 -8 C -48 16 -49 50 -46 88 Q -42 98 -33 92 Q -24 102 -13 93 Q -2 102 9 93 Q 20 102 30 92 Q 38 98 44 88 C 47 50 46 16 42 -8 A 42 46 0 1 0 -42 -8 Z';
+    } else if(st.hairShape==='wavy'){
+      d='M -42 -8 C -48 16 -49 48 -46 84 Q -42 96 -34 88 Q -26 100 -16 89 Q -6 100 4 89 Q 14 100 24 89 Q 34 98 42 84 C 47 48 46 16 42 -8 A 42 46 0 1 0 -42 -8 Z';
+    } else {
+      d='M -42 -8 C -47 14 -48 44 -45 78 Q -42 92 -36 86 Q -30 98 -22 88 Q -14 100 -6 88 Q 2 100 10 88 Q 18 100 26 88 Q 34 98 40 82 C 46 46 46 14 42 -8 A 42 46 0 1 0 -42 -8 Z';
+    }
+    s+='<path d="'+d+'" fill="'+c.base+'" stroke="'+INK+'" stroke-width="2.6"/>';
+    if(st.hairShape==='curly'){
+      const pts=[{x:0,y:100,rad:12}];
+      [-1,1].forEach(function(side){
+        for(let i=0;i<4;i++){ pts.push({x:side*44, y:6+i*24, rad:12}); }
+        pts.push({x:side*32, y:94, rad:12});
+      });
+      s+=clusterSVG(pts, c.base);
+    }
+  }
+  return '<g transform="translate('+CX+' '+r(R.headCY)+') scale('+r(sx)+' '+r(sy)+')">'+s+'</g>';
+}
+
+/* ---------- extras ---------- */
+function caneSVG(st,R){
+  if(st.age!=='old') return '';
+  const A=armGeom(st,R,1);
+  const x=A.p1.x+8, top=A.p1.y+4;
+  const d='M '+r(x)+' '+r(GROUND-6)+' L '+r(x)+' '+r(top)+' Q '+r(x)+' '+r(top-16)+' '+r(x-13)+' '+r(top-16);
+  return '<path d="'+d+'" fill="none" stroke="'+INK+'" stroke-width="9" stroke-linecap="round"/>'+
+         '<path d="'+d+'" fill="none" stroke="#B08968" stroke-width="5.5" stroke-linecap="round"/>';
+}
+function starSVG(x,y,s){
+  return '<path d="M '+r(x)+' '+r(y-s)+' L '+r(x+s*0.22)+' '+r(y-s*0.22)+' L '+r(x+s)+' '+r(y)+' L '+r(x+s*0.22)+' '+r(y+s*0.22)+' L '+r(x)+' '+r(y+s)+' L '+r(x-s*0.22)+' '+r(y+s*0.22)+' L '+r(x-s)+' '+r(y)+' L '+r(x-s*0.22)+' '+r(y-s*0.22)+' Z" fill="#F5C542" stroke="#D9A21B" stroke-width="2"/>';
+}
+function sparklesSVG(st,R){
+  const look=st.look;
+  let n=0;
+  if(look==='handsome'||look==='beautiful') n=4;
+  else if(look==='attractive') n=2;
+  if(!n) return '';
+  const k=R.headH/88;
+  const base=[
+    {x:CX-R.headW*0.85, y:R.headCY-R.headH*0.72, s:1.00},
+    {x:CX+R.headW*0.92, y:R.headCY-R.headH*0.45, s:0.85},
+    {x:CX+R.headW*0.80, y:R.headCY+R.headH*0.55, s:1.05},
+    {x:CX-R.headW*0.95, y:R.headCY+R.headH*0.25, s:0.75}
+  ];
+  let out='';
+  for(let i=0;i<n;i++){ out+=starSVG(base[i].x, base[i].y, 12*k*base[i].s); }
+  return '<g class="twinkle">'+out+'</g>';
+}
+
+/* ---------- teaching guides: height ruler + age badge ---------- */
+function rulerSVG(st){
+  const marks=['tall','medium','short'].map(function(h){
+    const RR=rig(Object.assign({},st,{height:h}));
+    return {h:h, y:RR.headCY-RR.headH/2};
+  });
+  const x=54, x0=38, x1=70;
+  const minY=Math.min.apply(null, marks.map(function(m){ return m.y; }));
+  let s='<line x1="'+x+'" y1="'+r(minY-22)+'" x2="'+x+'" y2="'+GROUND+'" stroke="#b9c6d2" stroke-width="3"/>';
+  marks.forEach(function(m){
+    const active=(st.height===m.h);
+    s+='<line x1="'+x0+'" y1="'+r(m.y)+'" x2="'+x1+'" y2="'+r(m.y)+'" stroke="'+(active?'#0072B2':'#b9c6d2')+'" stroke-width="'+(active?5:3)+'" stroke-linecap="round"/>';
+    s+='<text x="'+x+'" y="'+r(m.y-7)+'" text-anchor="middle" font-size="15" font-weight="'+(active?'800':'600')+'" fill="'+(active?'#0072B2':'#8a97a3')+'" font-family="system-ui,Segoe UI,Arial,sans-serif">'+cap(m.h)+'</text>';
+  });
+  return s;
+}
+function ageBadgeSVG(st){
+  const info={young:{word:'Young',range:'0-18 years'}, middle:{word:'Middle-aged',range:'40-60 years'}, old:{word:'Old',range:'65+ years'}}[st.age];
+  const x=236, y=10, w=156, h=44;
+  let s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="13" fill="#ffffff" stroke="#c9d6e2" stroke-width="2.5"/>';
+  s+='<circle cx="'+(x+23)+'" cy="'+(y+22)+'" r="12.5" fill="#eef6fc" stroke="'+INK+'" stroke-width="2.4"/>';
+  s+='<path d="M '+(x+23)+' '+(y+13.5)+' L '+(x+23)+' '+(y+22)+' L '+(x+29.5)+' '+(y+26)+'" fill="none" stroke="'+INK+'" stroke-width="2.4" stroke-linecap="round"/>';
+  s+='<text x="'+(x+44)+'" y="'+(y+20)+'" font-size="15" font-weight="800" fill="#2f2a28" font-family="system-ui,Segoe UI,Arial,sans-serif">'+info.word+'</text>';
+  s+='<text x="'+(x+44)+'" y="'+(y+37)+'" font-size="13" font-weight="600" fill="#5b6673" font-family="system-ui,Segoe UI,Arial,sans-serif">'+info.range+'</text>';
+  return s;
+}
+
+function weightBadgeSVG(st){
+  const x=246, y=522, w=146, h=50;
+  const word = (st.weight==='medium') ? 'Medium weight' : cap(st.weight);
+  const idx = Math.max(0, WEIGHT_ORDER.indexOf(st.weight));
+  const cx=x+17, cy=y+25;
+  let s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="13" fill="#ffffff" stroke="#c9d6e2" stroke-width="2.5"/>';
+  s+='<path d="M '+cx+' '+(cy+9)+' L '+cx+' '+(cy-9)+' M '+(cx-7)+' '+(cy+9)+' L '+(cx+7)+' '+(cy+9)+' M '+(cx-11)+' '+(cy-6)+' L '+(cx+11)+' '+(cy-6)+'" stroke="'+INK+'" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
+  s+='<path d="M '+(cx-11)+' '+(cy-6)+' L '+(cx-15)+' '+(cy+2)+' M '+(cx-11)+' '+(cy-6)+' L '+(cx-7)+' '+(cy+2)+' M '+(cx-15)+' '+(cy+2)+' Q '+(cx-11)+' '+(cy+6)+' '+(cx-7)+' '+(cy+2)+'" stroke="'+INK+'" stroke-width="2" fill="none"/>';
+  s+='<path d="M '+(cx+11)+' '+(cy-6)+' L '+(cx+7)+' '+(cy+2)+' M '+(cx+11)+' '+(cy-6)+' L '+(cx+15)+' '+(cy+2)+' M '+(cx+7)+' '+(cy+2)+' Q '+(cx+11)+' '+(cy+6)+' '+(cx+15)+' '+(cy+2)+'" stroke="'+INK+'" stroke-width="2" fill="none"/>';
+  s+='<text x="'+(x+36)+'" y="'+(y+22)+'" font-size="13.5" font-weight="800" fill="#2f2a28" font-family="system-ui,Segoe UI,Arial,sans-serif">'+word+'</text>';
+  for(let i=0;i<6;i++){
+    const active=(i===idx);
+    s+='<rect x="'+(x+36+i*13)+'" y="'+(y+30)+'" width="10" height="9" rx="2.5" fill="'+(active?'#0072B2':'#dbe6ef')+'"'+(active?' stroke="#005a8d" stroke-width="1.5"':'')+'/>';
+  }
+  return s;
+}
+
+/* ---------- main model ---------- */
+const SVG_STYLE='<style>.twinkle path{animation:tw 1.7s ease-in-out infinite;transform-box:fill-box;transform-origin:center}@keyframes tw{0%,100%{opacity:1}50%{opacity:.4}}@media (prefers-reduced-motion:reduce){.twinkle path{animation:none}}</style>';
+function buildSVG(st, opts){
+  opts=opts||{};
+  const R=rig(st);
+  const label=allSentences(st).map(function(x){ return x[1]; }).join(' ');
+  let s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 640" width="400" height="640" role="img" aria-label="'+esc(label)+'">';
+  s+=SVG_STYLE;
+  s+='<rect x="0" y="0" width="400" height="640" fill="#f7fbfe"/>';
+  s+='<rect x="0" y="512" width="400" height="128" fill="#e8f1f8"/>';
+  s+='<rect x="0" y="510" width="400" height="4" fill="#d5e4ef"/>';
+  s+='<ellipse cx="'+CX+'" cy="'+r(GROUND+2)+'" rx="'+r(Math.max(60,R.hipHW*1.6))+'" ry="12" fill="rgba(30,60,90,0.10)"/>';
+  if(!opts.clean){ s+=rulerSVG(st); s+=ageBadgeSVG(st); }
+  s+=hairBackGroup(st,R);
+  s+=bodySVG(st,R);
+  s+=clothesSVG(st,R);
+  s+=caneSVG(st,R);
+  s+=headGroup(st,R);
+  s+=hairFrontGroup(st,R);
+  s+=sparklesSVG(st,R);
+  if(!opts.clean) s+=weightBadgeSVG(st);
+  s+='</svg>';
+  return s;
+}
+/* ============================================================
+   Part 3: UI (start screen, create wizard, quiz, print/png, selftest)
+   ============================================================ */
+const el = function(id){ return document.getElementById(id); };
+const app = { screen:'start', gender:'girl', hide:false, cs:null, step:0, result:false,
+              quiz:{correct:0,total:0,q:null} };
+
+/* ---------- create state ---------- */
+function makeChar(g){
+  const d=defaultFeatures(g);
+  return Object.assign({gender:g, skin:1, shirt:(g==='girl'?1:3), hide:app.hide}, d);
+}
+
+/* ---------- option markup ---------- */
+function chipsHTML(key, values, labelFn){
+  return values.map(function(v){
+    const sel = app.cs && app.cs[key]===v ? ' sel' : '';
+    return '<button class="chip'+sel+'" data-key="'+key+'" data-val="'+v+'">'+labelFn(v)+'<span class="tick">&#10003;</span></button>';
+  }).join('');
+}
+function shapeGlyph(v){
+  if(v==='straight') return '<svg class="glyph" viewBox="0 0 46 34"><path d="M6 7 L40 7 M6 17 L40 17 M6 27 L40 27" stroke="#2f2a28" stroke-width="4" stroke-linecap="round"/></svg>';
+  if(v==='wavy') return '<svg class="glyph" viewBox="0 0 46 34"><path d="M4 9 Q12 3 20 9 T36 9 M4 25 Q12 19 20 25 T36 25" fill="none" stroke="#2f2a28" stroke-width="4" stroke-linecap="round"/></svg>';
+  return '<svg class="glyph" viewBox="0 0 46 34"><g fill="none" stroke="#2f2a28" stroke-width="3.2"><circle cx="11" cy="9" r="5"/><circle cx="24" cy="9" r="5"/><circle cx="37" cy="9" r="5"/><circle cx="17" cy="24" r="5"/><circle cx="30" cy="24" r="5"/></g></svg>';
+}
+function lengthGlyph(v){
+  const cap='<path d="M9 12 A 12 12 0 0 1 31 12 L 30 7 A 12 12 0 0 0 10 7 Z" fill="#6B4226" stroke="#2f2a28" stroke-width="2"/>';
+  if(v==='short') return '<svg class="glyph" viewBox="0 0 40 34"><circle cx="20" cy="16" r="11" fill="#F6D7C4" stroke="#2f2a28" stroke-width="2.4"/>'+cap+'</svg>';
+  return '<svg class="glyph" viewBox="0 0 40 34"><path d="M8 14 L 8 33 L 13 33 L 13 14 M32 14 L 32 33 L 27 33 L 27 14" fill="#6B4226" stroke="#2f2a28" stroke-width="2"/><circle cx="20" cy="16" r="11" fill="#F6D7C4" stroke="#2f2a28" stroke-width="2.4"/>'+cap+'</svg>';
+}
+function eyeGlyph(color){
+  const c=EYE_COLORS[color];
+  return '<svg class="glyph" viewBox="0 0 40 26"><path d="M3 13 Q20 -4 37 13 Q20 30 3 13 Z" fill="#fff" stroke="#2f2a28" stroke-width="2.4"/><circle cx="20" cy="13" r="7.6" fill="'+c.base+'"/><circle cx="20" cy="13" r="3.8" fill="#241D19"/><circle cx="18" cy="11" r="1.5" fill="#fff"/></svg>';
+}
+function ageGlyph(v){
+  const head='<circle cx="22" cy="16" r="12" fill="#EFC3A3" stroke="#2f2a28" stroke-width="2.4"/>';
+  const eyes='<circle cx="17" cy="15" r="1.7" fill="#241D19"/><circle cx="27" cy="15" r="1.7" fill="#241D19"/>';
+  const hair='<path d="M10 12 A 12 12 0 0 1 34 12 L 33 7 A 12 12 0 0 0 11 7 Z" fill="#6B4226" stroke="#2f2a28" stroke-width="2"/>';
+  if(v==='young') return '<svg class="glyph" viewBox="0 0 44 34">'+head+hair+eyes+'<path d="M18 21 Q22 24 26 21" fill="none" stroke="#2f2a28" stroke-width="2" stroke-linecap="round"/></svg>';
+  if(v==='middle') return '<svg class="glyph" viewBox="0 0 44 34">'+head+hair+eyes+'<path d="M18 21 Q22 23 26 21" fill="none" stroke="#2f2a28" stroke-width="2" stroke-linecap="round"/><path d="M12 -0 L 32 -0" stroke="none"/></svg>';
+  return '<svg class="glyph" viewBox="0 0 44 34"><path d="M10 12 A 12 12 0 0 1 34 12 L 33 7 A 12 12 0 0 0 11 7 Z" fill="#9AA0A6" stroke="#2f2a28" stroke-width="2"/>'+head+eyes+'<path d="M18 21 Q22 22 26 21" fill="none" stroke="#2f2a28" stroke-width="2" stroke-linecap="round"/><path d="M11 20 Q13 24 15 20 M29 20 Q31 24 33 20" fill="none" stroke="#D9A17E" stroke-width="1.6"/></svg>';
+}
+function weightGlyph(v){
+  const i=Math.max(0, WEIGHT_ORDER.indexOf(v));
+  const w=16+i*3;
+  return '<svg class="glyph" viewBox="0 0 44 34"><rect x="'+r(22-w/2)+'" y="10" width="'+w+'" height="20" rx="'+r(Math.min(9,w*0.38))+'" fill="#4CA6DE" stroke="#2f2a28" stroke-width="2.2"/></svg>';
+}
+function weightLabel(v){ return v==='medium'?'medium weight':cap(v); }
+
+function hairStepHTML(){
+  return '<div class="opt-group"><h3>Hair length</h3><div class="chips">'+
+      chipsHTML('hairLength', ['short','long'], function(v){ return lengthGlyph(v)+cap(v); })+'</div></div>'+
+    '<div class="opt-group"><h3>Hair colour</h3><div class="chips">'+
+      chipsHTML('hairColor', HAIR_ORDER, function(v){ return '<span class="sw" style="background:'+HAIR_COLORS[v].base+'"></span>'+cap(v); })+'</div></div>'+
+    '<div class="opt-group"><h3>Hair shape</h3><div class="chips">'+
+      chipsHTML('hairShape', SHAPES, function(v){ return shapeGlyph(v)+cap(v); })+'</div></div>';
+}
+function eyesStepHTML(){
+  return '<div class="opt-group"><h3>Eye colour</h3><div class="chips">'+
+    chipsHTML('eyeColor', EYE_ORDER, function(v){ return eyeGlyph(v)+cap(v); })+'</div></div>';
+}
+function ageStepHTML(){
+  const cards = AGE_ORDER.map(function(v){
+    const sel=app.cs.age===v?' sel':'';
+    const label=v==='middle'?'Middle-aged':cap(v);
+    return '<button class="chip card'+sel+'" data-key="age" data-val="'+v+'">'+ageGlyph(v)+label+'<span class="tick">&#10003;</span></button>';
+  }).join('');
+  return '<div class="opt-group"><h3>Age</h3><div class="chips">'+cards+'</div><div class="note">The character grows with this choice: child &rarr; adult &rarr; elderly.</div></div>';
+}
+function heightStepHTML(){
+  const cards = HEIGHT_ORDER.map(function(v){
+    const h = v==='short'?16:(v==='medium'?24:32);
+    const sel=app.cs.height===v?' sel':'';
+    return '<button class="chip card'+sel+'" data-key="height" data-val="'+v+'">'+
+      '<svg class="glyph" viewBox="0 0 44 36"><rect x="20" y="'+r(34-h)+'" width="5" height="'+h+'" rx="2.5" fill="#0072B2"/><line x1="7" y1="34" x2="37" y2="34" stroke="#2f2a28" stroke-width="2.4"/></svg>'+
+      (v==='medium'?'Medium height':cap(v))+'<span class="tick">&#10003;</span></button>';
+  }).join('');
+  return '<div class="opt-group"><h3>Height</h3><div class="chips">'+cards+'</div></div>';
+}
+function weightStepHTML(){
+  const vals=WEIGHT_ORDER.filter(function(w){ return !(app.hide && w==='fat'); });
+  const cards = vals.map(function(v){
+    const sel=app.cs.weight===v?' sel':'';
+    return '<button class="chip card'+sel+'" data-key="weight" data-val="'+v+'">'+weightGlyph(v)+weightLabel(v)+'<span class="tick">&#10003;</span></button>';
+  }).join('');
+  return '<div class="opt-group"><h3>Weight</h3><div class="chips">'+cards+'</div></div>';
+}
+function lookStepHTML(){
+  const vals=LOOK_BY_GENDER[app.cs.gender].filter(function(l){ return !(app.hide && l==='ugly'); });
+  const cards = vals.map(function(v){
+    const sel=app.cs.look===v?' sel':'';
+    const sub = v==='ugly' ? '<span class="sub">This word can be unkind about people. Use it carefully.</span>' : '';
+    return '<button class="chip card'+sel+'" data-key="look" data-val="'+v+'">'+cap(v)+sub+'<span class="tick">&#10003;</span></button>';
+  }).join('');
+  return '<div class="opt-group"><h3>Look</h3><div class="chips">'+cards+'</div>'+
+    '<div class="note">Handsome, beautiful and attractive add a smile and sparkles. Ugly does not change the model - it is only a word to learn.</div></div>';
+}
+function stepHTML(id){
+  if(id==='hair') return hairStepHTML();
+  if(id==='eyes') return eyesStepHTML();
+  if(id==='age') return ageStepHTML();
+  if(id==='height') return heightStepHTML();
+  if(id==='weight') return weightStepHTML();
+  return lookStepHTML();
+}
+
+/* ---------- create rendering ---------- */
+function popModel(box){
+  const svg=(box||el('model')).querySelector('svg');
+  if(!svg) return;
+  svg.classList.remove('pop');
+  void svg.offsetWidth;
+  svg.classList.add('pop');
+}
+function renderSentences(){
+  const st=app.cs;
+  let html='';
+  ['hair','eyes','age','height','weight','look'].forEach(function(cat){
+    if(cat==='look' && !st.look){
+      html+='<li class="sline empty"><span class="stag">Look</span><span class="stext">not chosen yet</span></li>';
+      return;
+    }
+    html+='<li class="sline"><span class="stag">'+cap(cat)+'</span><span class="stext">'+esc(sentenceFor(cat,st))+'</span></li>';
+  });
+  el('sentenceList').innerHTML=html;
+  el('kindNote').classList.toggle('hidden', !(st.weight==='fat' || st.look==='ugly'));
+}
+function renderStyleRow(){
+  let s='<span class="lab">Skin</span>';
+  SKIN_TONES.forEach(function(t,i){
+    s+='<button class="swatch'+(app.cs.skin===i?' sel':'')+'" data-skin="'+i+'" title="Skin tone '+(i+1)+'"><span style="background:'+t.base+'"></span></button>';
+  });
+  s+='<span class="lab">Shirt</span>';
+  SHIRT_COLORS.forEach(function(c,i){
+    s+='<button class="swatch'+(app.cs.shirt===i?' sel':'')+'" data-shirt="'+i+'" title="Shirt colour '+(i+1)+'"><span style="background:'+c+'"></span></button>';
+  });
+  el('styleRow').innerHTML=s;
+}
+function summaryHTML(){
+  const st=app.cs;
+  const rows=[
+    ['Hair', st.hairLength+' '+st.hairShape+' '+hairColorWord(st), sentenceFor('hair',st)],
+    ['Eyes', st.eyeColor, sentenceFor('eyes',st)],
+    ['Age', ageWord(st), sentenceFor('age',st)],
+    ['Height', st.height==='medium'?'medium height':st.height, sentenceFor('height',st)],
+    ['Weight', st.weight==='medium'?'medium weight':st.weight, sentenceFor('weight',st)],
+    ['Look', st.look||'-', st.look?sentenceFor('look',st):'']
+  ];
+  let html='<div class="opt-group"><h3>Your character &amp; example sentences</h3><ul class="summary-list">';
+  rows.forEach(function(x){
+    html+='<li><div class="srow-head"><span class="sfeat">'+x[0]+'</span><span class="sval">'+esc(x[1])+'</span></div>'+
+      (x[2]?'<div class="sex">'+esc(x[2])+'</div>':'')+'</li>';
+  });
+  html+='</ul><div class="nav" style="padding-top:10px">'+
+    '<button class="btn primary grow" id="editBtn">Edit features</button>'+
+    '<button class="btn" id="printBtn">Print</button>'+
+    '<button class="btn" id="pngBtn">Download PNG</button>'+
+    '<button class="btn" id="newBtn">New character</button>'+
+    '</div></div>';
+  return html;
+}
+function renderCreate(){
+  el('create').classList.toggle('result-mode', !!app.result);
+  el('createQuestion').textContent=questionText(app.cs);
+  Array.prototype.forEach.call(el('createGender').children, function(b){
+    b.classList.toggle('sel', b.dataset.gender===app.cs.gender);
+  });
+  el('stepsBar').innerHTML=STEPS.map(function(s,i){
+    let cls='step';
+    if(!app.result && i===app.step) cls+=' active';
+    if(i<app.step || app.result) cls+=' done';
+    return '<button class="'+cls+'" data-step="'+i+'">'+(i+1)+'. '+s.title+'</button>';
+  }).join('');
+  if(app.result){
+    el('stepArea').innerHTML=summaryHTML();
+    el('navBar').classList.add('hidden');
+  } else {
+    el('stepArea').innerHTML=stepHTML(STEPS[app.step].id);
+    el('navBar').classList.remove('hidden');
+    el('backBtn').disabled=app.step===0;
+    el('nextBtn').textContent=app.step===STEPS.length-1?'See description':'Next';
+    el('nextBtn').disabled=STEPS[app.step].id==='look' && !app.cs.look;
+  }
+  el('model').innerHTML=buildSVG(app.cs);
+  popModel(el('model'));
+  renderSentences();
+  renderStyleRow();
+  syncPrint();
+}
+
+/* ---------- quiz ---------- */
+function farHairColor(v){
+  const opts=HAIR_ORDER.filter(function(c){
+    if(c===v) return false;
+    return !HAIR_CLOSE.some(function(p){ return p.indexOf(v)>=0 && p.indexOf(c)>=0; });
+  });
+  return pick(opts);
+}
+function farEye(v){
+  const opts=EYE_ORDER.filter(function(c){
+    if(c===v) return false;
+    return !EYE_CLOSE.some(function(p){ return p.indexOf(v)>=0 && p.indexOf(c)>=0; });
+  });
+  return pick(opts);
+}
+function farWeight(v){
+  const i=WEIGHT_ORDER.indexOf(v);
+  let opts=WEIGHT_ORDER.filter(function(w,j){ return Math.abs(j-i)>=2 && !(app.hide && w==='fat'); });
+  if(!opts.length) opts=WEIGHT_ORDER.filter(function(w){ return w!==v; });
+  return pick(opts);
+}
+function mutate(st,cat){
+  const s=Object.assign({},st);
+  if(cat==='hair'){
+    const which=pick(['length','shape','color']);
+    if(which==='length') s.hairLength=st.hairLength==='short'?'long':'short';
+    else if(which==='shape') s.hairShape=pick(SHAPES.filter(function(x){ return x!==st.hairShape; }));
+    else s.hairColor=farHairColor(st.hairColor);
+  } else if(cat==='eyes'){ s.eyeColor=farEye(st.eyeColor); }
+  else if(cat==='age'){ s.age=pick(AGE_ORDER.filter(function(x){ return x!==st.age; })); }
+  else if(cat==='height'){ s.height=pick(HEIGHT_ORDER.filter(function(x){ return x!==st.height; })); }
+  else if(cat==='weight'){ s.weight=farWeight(st.weight); }
+  return s;
+}
+function nextQuizQuestion(){
+  const st=randomState(null, app.hide);
+  const cat=pick(['hair','eyes','age','height','weight']);
+  const correct=sentenceFor(cat,st);
+  let a=correct, b=correct, tries=0;
+  while((a===correct || b===correct || a===b) && tries<40){
+    a=sentenceFor(cat, mutate(st,cat));
+    b=sentenceFor(cat, mutate(st,cat));
+    tries++;
+  }
+  app.quiz.q={st:st, cat:cat, options:shuffle([{t:correct,ok:true},{t:a,ok:false},{t:b,ok:false}]), answered:false, choice:-1};
+  renderQuiz();
+}
+function renderQuiz(){
+  const q=app.quiz.q;
+  if(!q) return;
+  el('quizModel').innerHTML=buildSVG(q.st);
+  popModel(el('quizModel'));
+  const catName={hair:'hair',eyes:'eyes',age:'age',height:'height',weight:'weight'}[q.cat];
+  el('quizQuestion').textContent='Which sentence about '+(q.st.gender==='boy'?'his ':'her ')+catName+' is true?';
+  el('quizScore').textContent=app.quiz.correct+' / '+app.quiz.total;
+  el('quizArea').innerHTML=q.options.map(function(o,i){
+      let cls='qopt';
+      if(q.answered){
+        if(o.ok) cls+=' correct';
+        else if(i===q.choice) cls+=' wrong';
+      }
+      const mark=q.answered ? (o.ok?'<span class="mark">&#10003;</span>':(i===q.choice?'<span class="mark">&#10007;</span>':'')) : '';
+      return '<button class="'+cls+'" data-opt="'+i+'"'+(q.answered?' disabled':'')+'>'+mark+esc(o.t)+'</button>';
+    }).join('');
+  const fb=el('quizFeedback');
+  if(!q.answered){
+    fb.innerHTML='';
+    el('quizNext').classList.add('hidden');
+    el('quizDescCard').classList.add('hidden');
+  } else {
+    const ok=q.choice>=0 && q.options[q.choice].ok;
+    fb.innerHTML=(ok?'<span class="good">Well done!</span>':'<span class="bad">Not quite - the correct sentence is green.</span>');
+    el('quizNext').classList.remove('hidden');
+    el('quizDescCard').classList.remove('hidden');
+    el('quizDescList').innerHTML=allSentences(q.st).map(function(x){
+      return '<span class="dchip"><b>'+cap(x[0])+':</b> '+esc(x[1])+'</span>';
+    }).join('');
+  }
+  syncPrint(q.st);
+}
+function answerQuiz(i){
+  const q=app.quiz.q;
+  if(!q || q.answered) return;
+  q.answered=true; q.choice=i;
+  app.quiz.total++;
+  if(q.options[i].ok) app.quiz.correct++;
+  renderQuiz();
+}
+
+/* ---------- print / png ---------- */
+function doPrint(){
+  syncPrint();
+  window.print();
+}
+function doPNG(){
+  const svg=el('model').querySelector('svg');
+  if(!svg) return;
+  const clone=svg.cloneNode(true);
+  clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  const str=new XMLSerializer().serializeToString(clone);
+  const img=new Image();
+  img.onload=function(){
+    try{
+      const c=document.createElement('canvas'); c.width=800; c.height=1280;
+      const ctx=c.getContext('2d');
+      ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,800,1280);
+      ctx.drawImage(img,0,0,800,1280);
+      c.toBlob(function(blob){
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);
+        a.download='appearance-'+(app.cs.gender==='girl'?'girl':'boy')+'.png';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+      },'image/png');
+    }catch(err){ alert('Could not create the PNG. Please use Print instead.'); }
+  };
+  img.onerror=function(){ alert('Could not create the PNG. Please use Print instead.'); };
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(str);
+}
+
+/* ---------- screens ---------- */
+function showScreen(name){
+  app.screen=name;
+  ['start','create','quiz'].forEach(function(s){ el(s).classList.toggle('hidden', s!==name); });
+  if(name==='create') renderCreate();
+  if(name==='quiz') renderQuiz();
+}
+function renderMinis(){
+  const gp=Object.assign({gender:'girl', skin:1, shirt:1, hide:false}, defaultFeatures('girl'));
+  const bp=Object.assign({gender:'boy', skin:1, shirt:3, hide:false}, defaultFeatures('boy'));
+  el('miniGirl').innerHTML=buildSVG(gp,{clean:true});
+  el('miniBoy').innerHTML=buildSVG(bp,{clean:true});
+}
+function syncPrint(st){
+  st=st || app.cs || Object.assign({gender:app.gender,skin:1,shirt:2,hide:false}, defaultFeatures(app.gender));
+  el('pTitle').textContent=questionText(st);
+  el('printModel').innerHTML=buildSVG(st);
+  el('printSentences').innerHTML=allSentences(st).map(function(x){
+    return '<li><span class="tag">'+cap(x[0])+'</span>'+esc(x[1])+'</li>';
+  }).join('');
+}
+function startCreate(){
+  app.cs=makeChar(app.gender);
+  if(app.hide){
+    if(app.cs.weight==='fat') app.cs.weight='overweight';
+    if(app.cs.look==='ugly') app.cs.look=null;
+  }
+  app.step=0; app.result=false;
+  showScreen('create');
+}
+function startQuiz(){
+  app.quiz={correct:0,total:0,q:null};
+  showScreen('quiz');
+  nextQuizQuestion();
+}
+function isFullscreen(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function toggleFullscreen(){
+  const de=document.documentElement;
+  try{
+    if(!isFullscreen()){
+      if(de.requestFullscreen) de.requestFullscreen();
+      else if(de.webkitRequestFullscreen) de.webkitRequestFullscreen();
+    } else {
+      if(document.exitFullscreen) document.exitFullscreen();
+      else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
+  }catch(err){}
+}
+function updateFsLabel(){
+  const b=el('fsBtn');
+  if(b) b.textContent = isFullscreen() ? 'Exit fullscreen' : 'Fullscreen';
+}
+
+/* ---------- events ---------- */
+function init(){
+  try{
+    const v=localStorage.getItem('appearances-hide');
+    if(v==='1'){ app.hide=true; el('hideSensitive').checked=true; }
+  }catch(err){}
+  el('hideSensitive').addEventListener('change', function(e){
+    app.hide=e.target.checked;
+    try{ localStorage.setItem('appearances-hide', app.hide?'1':'0'); }catch(err){}
+  });
+  Array.prototype.forEach.call(el('genderRow').children, function(btn){
+    btn.addEventListener('click', function(){
+      app.gender=btn.dataset.gender;
+      Array.prototype.forEach.call(el('genderRow').children, function(b){
+        b.classList.toggle('sel', b===btn);
+        b.setAttribute('aria-pressed', b===btn?'true':'false');
+      });
+    });
+    btn.classList.toggle('sel', btn.dataset.gender===app.gender);
+    btn.setAttribute('aria-pressed', btn.dataset.gender===app.gender?'true':'false');
+  });
+  el('startCreate').addEventListener('click', startCreate);
+  el('startQuiz').addEventListener('click', startQuiz);
+  el('createHome').addEventListener('click', function(){ showScreen('start'); });
+  el('quizHome').addEventListener('click', function(){ showScreen('start'); });
+
+  el('stepsBar').addEventListener('click', function(e){
+    const b=e.target.closest('[data-step]'); if(!b) return;
+    app.result=false;
+    app.step=parseInt(b.dataset.step,10);
+    renderCreate();
+  });
+  el('stepArea').addEventListener('click', function(e){
+    const chip=e.target.closest('.chip');
+    if(chip){ app.cs[chip.dataset.key]=chip.dataset.val; if(app.result) app.result=false; renderCreate(); return; }
+    const b=e.target.closest('button'); if(!b) return;
+    if(b.id==='editBtn'){ app.result=false; renderCreate(); }
+    else if(b.id==='printBtn'){ doPrint(); }
+    else if(b.id==='pngBtn'){ doPNG(); }
+    else if(b.id==='newBtn'){ startCreate(); }
+  });
+  el('styleRow').addEventListener('click', function(e){
+    const s=e.target.closest('[data-skin]');
+    if(s){ app.cs.skin=parseInt(s.dataset.skin,10); renderCreate(); return; }
+    const t=e.target.closest('[data-shirt]');
+    if(t){ app.cs.shirt=parseInt(t.dataset.shirt,10); renderCreate(); }
+  });
+  el('createGender').addEventListener('click', function(e){
+    const b=e.target.closest('[data-gender]'); if(!b) return;
+    const g=b.dataset.gender; if(app.cs.gender===g) return;
+    const d=defaultFeatures(g);
+    app.cs.gender=g; app.cs.hairLength=d.hairLength; app.cs.hairColor=d.hairColor; app.cs.hairShape=d.hairShape;
+    if(app.cs.look && LOOK_BY_GENDER[g].indexOf(app.cs.look)<0){
+      app.cs.look=(app.cs.look==='handsome'||app.cs.look==='beautiful') ? (g==='boy'?'handsome':'beautiful') : null;
+    }
+    renderCreate();
+  });
+  el('backBtn').addEventListener('click', function(){
+    if(app.result){ app.result=false; renderCreate(); return; }
+    if(app.step>0){ app.step--; renderCreate(); }
+  });
+  el('nextBtn').addEventListener('click', function(){
+    if(app.step<STEPS.length-1){ app.step++; renderCreate(); }
+    else { app.result=true; renderCreate(); }
+  });
+  el('randomBtn').addEventListener('click', function(){
+    app.cs=randomState(app.cs?app.cs.gender:app.gender, app.hide);
+    app.result=true;
+    renderCreate();
+  });
+  el('resetBtn').addEventListener('click', function(){
+    app.cs=makeChar(app.cs?app.cs.gender:'girl');
+    app.step=0; app.result=false;
+    renderCreate();
+  });
+  el('quizArea').addEventListener('click', function(e){
+    const b=e.target.closest('[data-opt]'); if(!b) return;
+    answerQuiz(parseInt(b.dataset.opt,10));
+  });
+  el('quizNext').addEventListener('click', nextQuizQuestion);
+  el('quizRestart').addEventListener('click', function(){
+    app.quiz={correct:0,total:0,q:null};
+    nextQuizQuestion();
+  });
+  el('fsBtn').addEventListener('click', function(){ toggleFullscreen(); setTimeout(updateFsLabel,120); });
+  document.addEventListener('fullscreenchange', updateFsLabel);
+  document.addEventListener('webkitfullscreenchange', updateFsLabel);
+  updateFsLabel();
+  renderMinis();
+  if(location.search.indexOf('gender=boy')>=0) app.gender='boy';
+  if(location.search.indexOf('hide=1')>=0){ app.hide=true; el('hideSensitive').checked=true; }
+  if(location.search.indexOf('selftest')>=0) selftest();
+  if(location.search.indexOf('goto=create')>=0){ startCreate(); }
+  if(app.cs){
+    let changed=false;
+    const hm=location.search.match(/hair=(short|long)/); if(hm){ app.cs.hairLength=hm[1]; changed=true; }
+    const shm=location.search.match(/shape=(straight|wavy|curly)/); if(shm){ app.cs.hairShape=shm[1]; changed=true; }
+    const aw=location.search.match(/age=(young|middle|old)/); if(aw){ app.cs.age=aw[1]; changed=true; }
+    const ww=location.search.match(/weight=(thin|slim|medium|plump|overweight|fat)/); if(ww){ app.cs.weight=ww[1]; changed=true; }
+    if(changed) renderCreate();
+  }
+  const sm=location.search.match(/step=(\d)/);
+  if(app.cs && sm){ app.step=parseInt(sm[1],10); renderCreate(); }
+  if(location.search.indexOf('goto=quiz')>=0){ startQuiz(); if(location.search.indexOf('answer=1')>=0) answerQuiz(0); }
+  if(location.search.indexOf('goto=result')>=0){ app.gender='girl'; startCreate(); app.cs=randomState('girl', app.hide); app.result=true; renderCreate(); }
+  if(location.search.indexOf('printpreview')>=0){
+    const pa=el('printArea');
+    pa.style.display='block';
+    pa.style.cssText+=';position:fixed;inset:0;z-index:60;background:#fff;overflow:auto;padding:24px';
+  }
+}
+
+/* ---------- self test (?selftest=1) ---------- */
+function selftest(){
+  const out=[]; let ok=true, count=0;
+  const looks=[null].concat(LOOK_ORDER);
+  for(let gi=0; gi<2; gi++){
+    for(let ai=0; ai<AGE_ORDER.length; ai++){
+      for(let hi=0; hi<HEIGHT_ORDER.length; hi++){
+        for(let wi=0; wi<WEIGHT_ORDER.length; wi++){
+          for(let li=0; li<looks.length; li++){
+            for(let si=0; si<SHAPES.length; si++){
+              for(let hi2=0; hi2<2; hi2++){
+                const st={
+                  gender: gi?'boy':'girl',
+                  hairColor: HAIR_ORDER[(count)%HAIR_ORDER.length],
+                  eyeColor: EYE_ORDER[(count*3)%EYE_ORDER.length],
+                  hairLength: hi2?'long':'short',
+                  hairShape: SHAPES[si],
+                  age: AGE_ORDER[ai], height: HEIGHT_ORDER[hi],
+                  weight: WEIGHT_ORDER[wi], look: looks[li],
+                  skin: count%SKIN_TONES.length, shirt: count%SHIRT_COLORS.length, hide:false
+                };
+                const svg=buildSVG(st);
+                count++;
+                if(svg.indexOf('NaN')>=0 || svg.indexOf('undefined')>=0){
+                  ok=false;
+                  if(out.length<5) out.push('FAIL glyph '+JSON.stringify(st));
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  const s1={gender:'girl',hairColor:'blond',hairShape:'curly',hairLength:'long',eyeColor:'hazel',age:'middle',height:'medium',weight:'medium',look:'beautiful'};
+  const e1=allSentences(s1).map(function(x){ return x[1]; });
+  if(e1[0]!=='She has got long curly blonde hair.'){ ok=false; out.push('FAIL hair sentence: '+e1[0]); }
+  if(e1[3]!=='She is of medium height.'){ ok=false; out.push('FAIL height sentence: '+e1[3]); }
+  if(e1[4]!=='She is of medium weight.'){ ok=false; out.push('FAIL weight sentence: '+e1[4]); }
+  const s2={gender:'boy',hairColor:'blond',hairShape:'straight',hairLength:'short',eyeColor:'blue',age:'middle',height:'tall',weight:'fat',look:'ugly'};
+  if(allSentences(s2)[0][1]!=='He has got short straight blond hair.'){ ok=false; out.push('FAIL blond male'); }
+  for(let i=0;i<500;i++){
+    const st=randomState(null,false);
+    const cat=pick(['hair','eyes','age','height','weight']);
+    const m1=sentenceFor(cat, mutate(st,cat));
+    const m2=sentenceFor(cat, mutate(st,cat));
+    if(m1===sentenceFor(cat,st)){ ok=false; out.push('FAIL mutate1 '+cat); break; }
+    if(m2===sentenceFor(cat,st)){ ok=false; out.push('FAIL mutate2 '+cat); break; }
+  }
+  /* quiz flow smoke test */
+  nextQuizQuestion();
+  if(!app.quiz.q){ ok=false; out.push('FAIL quiz question'); }
+  else {
+    answerQuiz(0);
+    if(!el('quizFeedback').innerHTML){ ok=false; out.push('FAIL quiz feedback'); }
+  }
+  /* png serialization path */
+  try{
+    const svgEl=document.querySelector('#quizModel svg');
+    if(svgEl){
+      const clone=svgEl.cloneNode(true);
+      clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+      const str=new XMLSerializer().serializeToString(clone);
+      if(str.indexOf('<svg')<0 || str.length<500){ ok=false; out.push('FAIL serialize'); }
+      const url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(str);
+      if(url.length<500){ ok=false; out.push('FAIL dataurl'); }
+    } else { ok=false; out.push('FAIL no quiz svg'); }
+  }catch(e){ ok=false; out.push('FAIL png path: '+e.message); }
+  /* hide fat & ugly */
+  app.hide=true;
+  for(let i=0;i<300;i++){
+    const st=randomState(null,true);
+    if(st.weight==='fat'||st.look==='ugly'){ ok=false; out.push('FAIL hide random'); break; }
+    const m=mutate(st,'weight');
+    if(m.weight==='fat'){ ok=false; out.push('FAIL hide farWeight'); break; }
+  }
+  app.hide=false;
+  const pre=el('selftest');
+  pre.style.display='block';
+  pre.textContent=(ok?'SELFTEST PASS':'SELFTEST FAIL')+' | svg-builds='+count+(out.length?('\n'+out.join('\n')):'');
+  document.title=(ok?'PASS':'FAIL')+' - Appearances';
+  /* QA grid (only with ?selftest=1) */
+  const demo=[
+    {gender:'girl',hairLength:'long',hairColor:'brown',hairShape:'wavy',eyeColor:'brown',age:'young',height:'medium',weight:'medium',look:null},
+    {gender:'boy',hairLength:'short',hairColor:'dark',hairShape:'straight',eyeColor:'brown',age:'young',height:'medium',weight:'medium',look:null},
+    {gender:'girl',hairLength:'long',hairColor:'blond',hairShape:'straight',eyeColor:'blue',age:'middle',height:'tall',weight:'slim',look:null},
+    {gender:'boy',hairLength:'short',hairColor:'ginger',hairShape:'curly',eyeColor:'green',age:'middle',height:'short',weight:'plump',look:null},
+    {gender:'girl',hairLength:'long',hairColor:'grey',hairShape:'curly',eyeColor:'hazel',age:'old',height:'medium',weight:'overweight',look:null},
+    {gender:'boy',hairLength:'short',hairColor:'red',hairShape:'wavy',eyeColor:'brown',age:'old',height:'tall',weight:'fat',look:null},
+    {gender:'girl',hairLength:'long',hairColor:'fair',hairShape:'wavy',eyeColor:'green',age:'young',height:'short',weight:'thin',look:null},
+    {gender:'boy',hairLength:'short',hairColor:'blond',hairShape:'curly',eyeColor:'blue',age:'young',height:'tall',weight:'medium',look:null},
+    {gender:'girl',hairLength:'long',hairColor:'dark',hairShape:'straight',eyeColor:'brown',age:'middle',height:'medium',weight:'medium',look:'beautiful'},
+    {gender:'boy',hairLength:'short',hairColor:'brown',hairShape:'straight',eyeColor:'green',age:'middle',height:'medium',weight:'medium',look:'handsome'},
+    {gender:'girl',hairLength:'long',hairColor:'brown',hairShape:'wavy',eyeColor:'blue',age:'middle',height:'medium',weight:'medium',look:'attractive'},
+    {gender:'boy',hairLength:'short',hairColor:'brown',hairShape:'straight',eyeColor:'brown',age:'middle',height:'medium',weight:'medium',look:'well-built'},
+    {gender:'girl',hairLength:'long',hairColor:'brown',hairShape:'wavy',eyeColor:'brown',age:'middle',height:'medium',weight:'medium',look:'ugly'},
+    {gender:'boy',hairLength:'long',hairColor:'dark',hairShape:'wavy',eyeColor:'hazel',age:'young',height:'medium',weight:'medium',look:null},
+    {gender:'girl',hairLength:'short',hairColor:'red',hairShape:'curly',eyeColor:'green',age:'old',height:'short',weight:'slim',look:null},
+    {gender:'boy',hairLength:'short',hairColor:'grey',hairShape:'straight',eyeColor:'blue',age:'old',height:'medium',weight:'medium',look:null},
+    {gender:'boy',hairLength:'long',hairColor:'blond',hairShape:'straight',eyeColor:'blue',age:'middle',height:'medium',weight:'medium',look:null},
+    {gender:'boy',hairLength:'long',hairColor:'brown',hairShape:'curly',eyeColor:'green',age:'young',height:'medium',weight:'medium',look:null}
+  ];
+  const cells=demo.map(function(d,i){
+    const st=Object.assign({skin:i%6, shirt:i%SHIRT_COLORS.length, hide:false}, d);
+    return '<div class="qcell">'+buildSVG(st)+'<div class="qlab">#'+(i+1)+'</div></div>';
+  }).join('');
+  const wrap=document.createElement('div');
+  wrap.id='qgrid';
+  wrap.innerHTML='<style>#qgrid{position:fixed;inset:0;z-index:50;background:#dfeaf4;overflow:auto;padding:8px}'+
+    '#qgrid .qh{font:700 15px system-ui;padding:2px 6px 8px}#qgrid .qrow{display:flex;flex-wrap:wrap;gap:8px}'+
+    '#qgrid .qcell{width:170px;background:#fff;border:1px solid #9fb6c9;border-radius:10px;padding:3px;display:flex;flex-direction:column;align-items:center}'+
+    '#qgrid .qcell svg{width:100%;height:220px;display:block}#qgrid .qlab{font:700 12px system-ui;color:#5b6673;padding:2px}</style>'+
+    '<div class="qh">'+pre.textContent.replace(/\n/g,' | ')+'</div><div class="qrow">'+cells+'</div>';
+  document.body.appendChild(wrap);
+}
+
+init();
+</script>
+</body>
+</html>
